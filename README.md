@@ -142,9 +142,7 @@ Content-Type: application/json
 
 ---
 
-## License
 
-ISC
 
 ---
 
