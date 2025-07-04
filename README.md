@@ -141,14 +141,3 @@ Content-Type: application/json
 
 - Edit `services/notificationService.js` to add more notification channels.
 
----
-
-## License
-
-ISC
-
----
-
-## Disclaimer
-
-This project is for educational and authorized automation/testing purposes only. Use responsibly and comply with the terms of service of each platform.
