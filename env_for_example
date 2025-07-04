@@ -1,0 +1,24 @@
+# TikTok Auth Cookie (copy from browser after logging in)
+TIKTOK_AUTH_HEADER=tt_webid=xxxxxxxxx; sessionid=yyyyyyyyy;
+
+# MongoDB URI for storing results, trap logs, etc.
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/mydatabase?retryWrites=true&w=majority
+
+# Used for other bots
+TELEGRAM_BOT_TOKEN=123456789:ABCDEF-YOUR-BOT-TOKEN
+TELEGRAM_CHAT_ID=987654321
+
+REDDIT_ACCESS_TOKEN=your_reddit_access_token
+REDDIT_USER=your_reddit_username
+
+IG_ACCESS_TOKEN=your_instagram_graph_api_token
+IG_USER_ID=17841400000000000
+
+TWITTER_BEARER_TOKEN=AAAAAAAAAAAAAAAAAAAAA%2FAAAAAAAAAAAAAAAAAAAAAAA%3DAAAAAAAAAAAAAAA
+TWITTER_USER_ID=1234567890
+
+FACEBOOK_PAGE_ACCESS_TOKEN=your_facebook_page_access_token
+FACEBOOK_PAGE_ID=1234567890123456
+
+GMB_ACCESS_TOKEN=your_google_my_business_access_token
+GMB_ACCOUNT_ID=your_gmb_account_id
