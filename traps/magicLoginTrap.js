@@ -1,24 +1,25 @@
-const puppeteer = require('puppeteer');
+const axios = require('axios');
 const { notifyTrap } = require('../services/notificationService');
 const logger = require('../utils/logger');
 
 async function triggerTrap(userIdentifier, platform) {
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-  logger.info(`[TRAP] Triggered for ${userIdentifier} on ${platform}`);
+  try {
+    const response = await axios.post('https://example.com/magic-login', {
+      email: userIdentifier
+    });
 
-  // Example: Go to a decoy login
-  await page.goto('https://example.com/magic-login', { waitUntil: 'networkidle2' });
-  await page.type('#email', userIdentifier);
-  await page.click('#submit');
+    logger.info(`[TRAP] Axios trap for ${userIdentifier} on ${platform}`);
+    logger.debug(`[TRAP] Response: ${JSON.stringify(response.data)}`);
 
-  await notifyTrap({
-    platform,
-    user: userIdentifier,
-    message: `Trap activated on ${platform} for ${userIdentifier}`
-  });
+    await notifyTrap({
+      platform,
+      user: userIdentifier,
+      message: `Trap activated via Axios for ${platform}`
+    });
 
-  await browser.close();
+  } catch (err) {
+    logger.error(`[TRAP] Axios trap failed: ${err.message}`);
+  }
 }
 
 module.exports = { triggerTrap };

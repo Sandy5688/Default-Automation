@@ -2,14 +2,14 @@
 
 ## Overview
 
-Default-Automation is a Node.js-based automation framework designed to run scheduled bots for various social media platforms (Instagram, Twitter, TikTok, Telegram, Facebook, Reddit, Google My Business) and handle trap events with notification support. It uses Puppeteer for browser automation, Express for the API, and supports notifications via email, Telegram, and Twilio (SMS/WhatsApp).
+Default-Automation is a Node.js-based automation framework designed to run scheduled bots for various social media platforms and handle trap events with notification support. It now uses Axios for lightweight HTTP/API automation instead of Puppeteer.
 
 ---
 
 ## Features
 
-- **Scheduled Social Media Bots**: Automates login, posting, liking, commenting, and other actions on supported platforms.
-- **Trap Event API**: Exposes an API endpoint to trigger "trap" events for monitoring or honeypot purposes.
+- **Scheduled Social Media Bots**: (Legacy) Previously used Puppeteer for browser automation. Migration to Axios/API-based automation is recommended.
+- **Trap Event API**: Exposes an API endpoint to trigger "trap" events using Axios for decoy login endpoints.
 - **Multi-channel Notifications**: Sends alerts via email, Telegram, and Twilio when traps are triggered.
 - **Logging**: Centralized logging to both console and file.
 - **Extensible**: Easily add new bots or notification channels.
@@ -20,12 +20,12 @@ Default-Automation is a Node.js-based automation framework designed to run sched
 
 ```
 .
-├── bots/                # Social media automation bots
+├── bots/                # Social media automation bots (Puppeteer-based, deprecated)
 ├── cron/                # Cron job scheduler for bots
 ├── logs/                # Log files (gitignored)
 ├── routes/              # Express route handlers
-├── services/            # Notification and Puppeteer helpers
-├── traps/               # Trap logic
+├── services/            # Notification and Axios helpers
+├── traps/               # Trap logic (now uses Axios)
 ├── utils/               # Logger utility
 ├── .env                 # Environment variables (not committed)
 ├── .gitignore
@@ -75,7 +75,7 @@ ALERT_SMS_TO=+1234567890
 TWILIO_WHATSAPP_FROM=whatsapp:+1234567890
 ALERT_WHATSAPP_TO=whatsapp:+1234567890
 
-# Social Media Credentials (for bots)
+# Social Media Credentials (for bots, legacy)
 INSTAGRAM_USER=your_instagram_username
 INSTAGRAM_PASS=your_instagram_password
 TWITTER_USER=your_twitter_username
@@ -104,7 +104,7 @@ node server.js
 ```
 
 - The server will start on the port specified in `.env` or default to 3000.
-- All bots will be scheduled automatically via cron.
+- All bots will be scheduled automatically via cron (legacy Puppeteer-based, migration to Axios recommended).
 
 ### API
 
@@ -120,13 +120,14 @@ Content-Type: application/json
 ```
 
 - Triggers a trap for the specified platform and sends notifications.
+- Trap logic now uses Axios to POST to a decoy endpoint.
 
 ---
 
-## Adding/Modifying Bots
+## Migrating from Puppeteer to Axios
 
-- Each bot is a module in `bots/` and uses Puppeteer for automation.
-- Update selectors and logic as needed for each platform.
+- Trap logic is now Axios-based for lightweight, fast API interactions.
+- Bots are still Puppeteer-based but should be migrated to Axios or direct API usage for efficiency.
 
 ---
 
@@ -142,7 +143,9 @@ Content-Type: application/json
 
 ---
 
+## License
 
+ISC
 
 ---
 

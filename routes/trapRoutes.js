@@ -1,17 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { triggerTrap } = require('../traps/magicLoginTrap');
+const trap = require('../controllers/trapController');
 
-router.post('/trap/:platform', async (req, res) => {
-  const { platform } = req.params;
-  const { user } = req.body;
-
-  try {
-    await triggerTrap(user, platform);
-    res.status(200).json({ message: 'Trap triggered successfully' });
-  } catch (err) {
-    res.status(500).json({ error: 'Trap trigger failed' });
-  }
-});
+router.post('/:platform', trap.triggerTrap);
 
 module.exports = router;

@@ -1,50 +1,105 @@
-const puppeteer = require('puppeteer');
+const axios = require('axios');
+const { MongoClient } = require('mongodb');
 const logger = require('../utils/logger');
 
-async function runTwitterBot() {
-  logger.info('[TwitterBot] Starting');
+const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+const userId = process.env.TWITTER_USER_ID;
+const mongoUri = process.env.MONGO_URI;
 
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-
+async function logToMongo(activity) {
+  if (!mongoUri) return;
+  const client = new MongoClient(mongoUri);
   try {
-    await page.goto('https://twitter.com/login', { waitUntil: 'networkidle2' });
+    await client.connect();
+    const db = client.db('automation');
+    await db.collection('twitter_logs').insertOne({
+      ...activity,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    logger.error(`[TwitterBot] MongoDB log error: ${err.message}`);
+  } finally {
+    await client.close();
+  }
+}
 
-    // Example: login logic (optional if using cookies/session later)
-    await page.waitForSelector('input[name="text"]');
-    await page.type('input[name="text"]', process.env.TWITTER_USER || 'your_username');
-    await page.click('div[role="button"][data-testid="LoginForm_Login_Button"]');
-    await page.waitForTimeout(1000);
-    await page.waitForSelector('input[name="password"]');
-    await page.type('input[name="password"]', process.env.TWITTER_PASS || 'your_password');
-    await page.click('div[role="button"][data-testid="LoginForm_Login_Button"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+async function getProfile() {
+  const resp = await axios.get(
+    `https://api.twitter.com/2/users/${userId}`,
+    { headers: { Authorization: `Bearer ${bearerToken}` } }
+  );
+  logger.info(`[TwitterBot] Profile: ${JSON.stringify(resp.data)}`);
+  await logToMongo({ action: 'getProfile', data: resp.data });
+  return resp.data;
+}
 
-    // Tweet
-    await page.waitForSelector('a[aria-label="Tweet"]', { visible: true });
-    await page.click('a[aria-label="Tweet"]');
-    await page.waitForSelector('div[aria-label="Tweet text"]', { visible: true });
-    await page.type('div[aria-label="Tweet text"]', 'Hello world from bot!');
-    await page.click('div[data-testid="tweetButtonInline"]');
-    await page.waitForTimeout(2000);
+async function postContent(text) {
+  const resp = await axios.post(
+    'https://api.twitter.com/2/tweets',
+    { text },
+    { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
+  );
+  logger.info(`[TwitterBot] Tweeted: ${text}`);
+  await logToMongo({ action: 'postContent', text, resp: resp.data });
+  return resp.data;
+}
 
-    // Like a tweet (navigate to a tweet and click like)
-    await page.goto('https://twitter.com/username/status/TWEET_ID', { waitUntil: 'networkidle2' }); // Replace username and TWEET_ID
-    await page.waitForSelector('div[data-testid="like"]', { visible: true });
-    await page.click('div[data-testid="like"]');
-    await page.waitForTimeout(1000);
+async function likeContent(tweetId) {
+  if (!userId) return;
+  await axios.post(
+    `https://api.twitter.com/2/users/${userId}/likes`,
+    { tweet_id: tweetId },
+    { headers: { Authorization: `Bearer ${bearerToken}` } }
+  );
+  logger.info(`[TwitterBot] Liked tweet: ${tweetId}`);
+  await logToMongo({ action: 'likeContent', tweetId });
+}
 
-    // Follow a user
-    await page.goto('https://twitter.com/target_user', { waitUntil: 'networkidle2' }); // Replace target_user
-    await page.waitForSelector('div[data-testid$="-follow"]', { visible: true });
-    await page.click('div[data-testid$="-follow"]');
+async function commentOnContent(tweetId, text) {
+  // Twitter API v2 does not support direct replies via a single endpoint.
+  // Instead, post a tweet with in_reply_to_tweet_id.
+  const resp = await axios.post(
+    'https://api.twitter.com/2/tweets',
+    { text, reply: { in_reply_to_tweet_id: tweetId } },
+    { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
+  );
+  logger.info(`[TwitterBot] Replied to ${tweetId}: ${text}`);
+  await logToMongo({ action: 'commentOnContent', tweetId, text, resp: resp.data });
+}
+
+async function autoReplyToComments(tweetId, replyText) {
+  // Not implemented: would require streaming or polling mentions.
+  logger.info('[TwitterBot] autoReplyToComments: Not implemented');
+}
+
+async function runTwitterBot() {
+  logger.info('[TwitterBot] Starting (Axios-based)');
+  if (!bearerToken || !userId) {
+    logger.error('[TwitterBot] TWITTER_BEARER_TOKEN or TWITTER_USER_ID not set in .env');
+    return;
+  }
+  try {
+    const profile = await getProfile();
+
+    // Post a tweet
+    const tweet = await postContent('Hello world from Axios bot!');
+
+    // Like the tweet
+    if (tweet?.data?.id) {
+      await likeContent(tweet.data.id);
+
+      // Comment (reply) on the tweet
+      await commentOnContent(tweet.data.id, 'Nice tweet!');
+      await autoReplyToComments(tweet.data.id, 'Thanks for your reply!');
+    }
 
     logger.info('[TwitterBot] Automation complete');
+    await logToMongo({ action: 'runTwitterBot', status: 'complete' });
   } catch (error) {
-    logger.error(`[TwitterBot] Error: ${error.message}`);
-  } finally {
-    await browser.close();
+    logger.error(`[TwitterBot] Error: ${error.response?.data?.detail || error.message}`);
+    await logToMongo({ action: 'runTwitterBot', error: error.message });
   }
 }
 
 module.exports = runTwitterBot;
+

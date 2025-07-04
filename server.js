@@ -1,16 +1,34 @@
 require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
+const authRoutes = require('./routes/authRoutes');
 const trapRoutes = require('./routes/trapRoutes');
 const startCronJobs = require('./cron/scheduleBots');
+const cleanupInactive = require('./cron/cleanupInactive');
 const logger = require('./utils/logger');
 
 const app = express();
 app.use(express.json());
 
-app.use('/api/v1/trap', trapRoutes);
-
-app.listen(process.env.PORT || 3000, () => {
-  logger.info(`Server started on port ${process.env.PORT || 3000}`);
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  logger.info('[MongoDB] Connected');
+}).catch(err => {
+  logger.error('[MongoDB] Connection error:', err);
 });
 
+app.use('/auth', authRoutes);
+app.use('/trap', trapRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  logger.info(`[Server] Listening on port ${PORT}`);
+});
+
+// Start cron job for cleaning up inactive users
+cleanupInactive();
+// Start cron jobs for all bots
 startCronJobs();

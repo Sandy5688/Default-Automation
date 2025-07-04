@@ -1,7 +1,9 @@
+// DEPRECATED: Puppeteer helpers are no longer used in this project.
+// All bots have migrated to Axios or HTTP-based automation.
+// This file is retained only for historical reference. Do not import it.
+
 const puppeteer = require('puppeteer');
 const logger = require('../utils/logger');
-
-// DEPRECATED: Puppeteer helpers are no longer used. Axios is now used for automation.
 
 // Launch a new Puppeteer browser with default config
 async function launchBrowser(options = {}) {

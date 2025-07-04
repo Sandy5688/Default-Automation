@@ -1,44 +1,62 @@
-const puppeteer = require('puppeteer');
+const axios = require('axios');
+const { MongoClient } = require('mongodb');
 const logger = require('../utils/logger');
 
-async function runGmbBot() {
-  logger.info('[GmbBot] Starting');
+const gmbAccessToken = process.env.GMB_ACCESS_TOKEN;
+const gmbLocationId = process.env.GMB_LOCATION_ID;
+const mongoUri = process.env.MONGO_URI;
 
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage();
-
+async function logToMongo(activity) {
+  if (!mongoUri) return;
+  const client = new MongoClient(mongoUri);
   try {
-    await page.goto('https://business.google.com/', { waitUntil: 'networkidle2' });
-
-    logger.info('[GmbBot] At GMB dashboard/login');
-
-    // Option: inject session cookies here to bypass login
-
-    // Login
-    await page.waitForSelector('input[type="email"]');
-    await page.type('input[type="email"]', process.env.GMB_USER || 'your_email');
-    await page.click('#identifierNext');
-    await page.waitForTimeout(2000);
-    await page.waitForSelector('input[type="password"]', { visible: true });
-    await page.type('input[type="password"]', process.env.GMB_PASS || 'your_password');
-    await page.click('#passwordNext');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    // Post an update (navigate to post section and create post)
-    await page.goto('https://business.google.com/posts', { waitUntil: 'networkidle2' });
-    await page.waitForSelector('button[aria-label="Create post"]', { visible: true });
-    await page.click('button[aria-label="Create post"]');
-    await page.waitForSelector('textarea', { visible: true });
-    await page.type('textarea', 'Bot update!');
-    await page.click('button[type="submit"]');
-
-    await page.waitForTimeout(5000);
-
-    logger.info('[GmbBot] Task completed');
-  } catch (error) {
-    logger.error(`[GmbBot] Error: ${error.message}`);
+    await client.connect();
+    const db = client.db('automation');
+    await db.collection('gmb_logs').insertOne({
+      ...activity,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    logger.error(`[GmbBot] MongoDB log error: ${err.message}`);
   } finally {
-    await browser.close();
+    await client.close();
+  }
+}
+
+async function getProfile() {
+  // GMB API does not provide a direct profile endpoint.
+  logger.info('[GmbBot] getProfile: Not supported');
+}
+
+async function postContent(summary) {
+  const resp = await axios.post(
+    `https://mybusiness.googleapis.com/v4/accounts/${gmbLocationId}/localPosts`,
+    { languageCode: 'en', summary },
+    {
+      headers: {
+        'Authorization': `Bearer ${gmbAccessToken}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  logger.info('[GmbBot] Post created');
+  await logToMongo({ action: 'postContent', summary, resp: resp.data });
+}
+
+async function runGmbBot() {
+  logger.info('[GmbBot] Starting (Axios-based)');
+  if (!gmbAccessToken || !gmbLocationId) {
+    logger.error('[GmbBot] GMB_ACCESS_TOKEN or GMB_LOCATION_ID not set in .env');
+    return;
+  }
+  try {
+    await getProfile();
+    await postContent('Bot update!');
+    logger.info('[GmbBot] Task complete');
+    await logToMongo({ action: 'runGmbBot', status: 'complete' });
+  } catch (error) {
+    logger.error(`[GmbBot] Error: ${error.response?.data?.error?.message || error.message}`);
+    await logToMongo({ action: 'runGmbBot', error: error.message });
   }
 }
 

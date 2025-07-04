@@ -1,54 +1,80 @@
-const puppeteer = require('puppeteer');
+const axios = require('axios');
+const { MongoClient } = require('mongodb');
 const logger = require('../utils/logger');
 
-async function runFacebookBot() {
-  logger.info('[FacebookBot] Starting');
+const fbAccessToken = process.env.FB_ACCESS_TOKEN;
+const fbPageId = process.env.FB_PAGE_ID;
+const mongoUri = process.env.MONGO_URI;
 
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-
+async function logToMongo(activity) {
+  if (!mongoUri) return;
+  const client = new MongoClient(mongoUri);
   try {
-    await page.goto('https://www.facebook.com/login', { waitUntil: 'networkidle2' });
-
-    logger.info('[FacebookBot] At login page');
-
-    // Login
-    await page.waitForSelector('#email');
-    await page.type('#email', process.env.FB_USER || 'your_email');
-    await page.type('#pass', process.env.FB_PASS || 'your_password');
-    await page.click('button[name="login"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    // Post (navigate to home and post)
-    await page.goto('https://www.facebook.com/', { waitUntil: 'networkidle2' });
-    await page.waitForSelector('div[aria-label="Create a post"]', { visible: true });
-    await page.click('div[aria-label="Create a post"]');
-    await page.waitForSelector('div[aria-label="What\'s on your mind?"]', { visible: true });
-    await page.type('div[aria-label="What\'s on your mind?"]', 'Hello from bot!');
-    // Wait for the post button to be enabled and click it
-    await page.waitForSelector('div[aria-label="Post"]', { visible: true });
-    await page.click('div[aria-label="Post"]');
-    await page.waitForTimeout(2000);
-
-    // Like a post (navigate to a post and click like)
-    // Replace POST_ID with a real post id or use a selector for the first post
-    await page.goto('https://www.facebook.com/', { waitUntil: 'networkidle2' });
-    await page.waitForSelector('div[aria-label="Like"]', { visible: true });
-    await page.click('div[aria-label="Like"]');
-    await page.waitForTimeout(1000);
-
-    // Comment on a post
-    await page.waitForSelector('div[aria-label="Write a comment"]', { visible: true });
-    await page.type('div[aria-label="Write a comment"]', 'Nice post!');
-    await page.keyboard.press('Enter');
-
-    await page.waitForTimeout(5000);
-
-    logger.info('[FacebookBot] Task complete');
-  } catch (error) {
-    logger.error(`[FacebookBot] Error: ${error.message}`);
+    await client.connect();
+    const db = client.db('automation');
+    await db.collection('facebook_logs').insertOne({
+      ...activity,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    logger.error(`[FacebookBot] MongoDB log error: ${err.message}`);
   } finally {
-    await browser.close();
+    await client.close();
+  }
+}
+
+async function getProfile() {
+  const resp = await axios.get(
+    `https://graph.facebook.com/v18.0/me?access_token=${fbAccessToken}`
+  );
+  logger.info(`[FacebookBot] Profile: ${JSON.stringify(resp.data)}`);
+  await logToMongo({ action: 'getProfile', data: resp.data });
+  return resp.data;
+}
+
+async function postContent(message) {
+  const resp = await axios.post(
+    `https://graph.facebook.com/${fbPageId}/feed`,
+    { message, access_token: fbAccessToken }
+  );
+  logger.info('[FacebookBot] Post published');
+  await logToMongo({ action: 'postContent', message, resp: resp.data });
+  return resp.data;
+}
+
+async function commentOnContent(postId, message) {
+  const resp = await axios.post(
+    `https://graph.facebook.com/${postId}/comments`,
+    { message, access_token: fbAccessToken }
+  );
+  logger.info(`[FacebookBot] Commented on ${postId}`);
+  await logToMongo({ action: 'commentOnContent', postId, message, resp: resp.data });
+}
+
+async function autoReplyToComments(postId, replyMessage) {
+  // Not implemented: would require polling comments and replying.
+  logger.info('[FacebookBot] autoReplyToComments: Not implemented');
+}
+
+async function runFacebookBot() {
+  logger.info('[FacebookBot] Starting (Axios-based)');
+  if (!fbAccessToken || !fbPageId) {
+    logger.error('[FacebookBot] FB_ACCESS_TOKEN or FB_PAGE_ID not set in .env');
+    return;
+  }
+  try {
+    await getProfile();
+    const post = await postContent('Hello from Axios Facebook bot!');
+    const postId = post?.id;
+    if (postId) {
+      await commentOnContent(postId, 'Nice post!');
+      await autoReplyToComments(postId, 'Thanks for your comment!');
+    }
+    logger.info('[FacebookBot] Task complete');
+    await logToMongo({ action: 'runFacebookBot', status: 'complete' });
+  } catch (error) {
+    logger.error(`[FacebookBot] Error: ${error.response?.data?.error?.message || error.message}`);
+    await logToMongo({ action: 'runFacebookBot', error: error.message });
   }
 }
 

@@ -1,45 +1,107 @@
-const puppeteer = require('puppeteer');
+const axios = require('axios');
 const logger = require('../utils/logger');
+const { logToMongo } = require('../utils/mongoLogger');
 
 async function runInstagramBot() {
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
+  logger.info('[InstagramBot] Starting (Graph API)');
 
-  logger.info('[InstagramBot] Launching');
+  const token = process.env.FB_ACCESS_TOKEN;
+  const pageId = process.env.FB_PAGE_ID;
+  const igId = process.env.IG_BUSINESS_ID;
+
+  if (!token || !pageId || !igId) {
+    logger.error('[InstagramBot] Missing FB_ACCESS_TOKEN, FB_PAGE_ID, or IG_BUSINESS_ID');
+    return;
+  }
 
   try {
-    await page.goto('https://instagram.com', { waitUntil: 'domcontentloaded' });
+    // 1 Auto-post multiple images
+    const mediaIds = await Promise.all([
+      uploadImageToInstagram('https://example.com/image1.jpg', token, igId),
+      uploadImageToInstagram('https://example.com/image2.jpg', token, igId),
+    ]);
+    const postResp = await createCarouselPost(mediaIds, 'Auto-posted from bot', token, igId);
+    logger.info(`[InstagramBot] Carousel post created: ${postResp.id}`);
+    await logToMongo('instagram', { action: 'post', id: postResp.id });
 
-    // Perform login, post, like, comment automation
+    // 2 Auto-comment on recent media
+    const recent = await getRecentMedia(igId, token);
+    for (let media of recent) {
+      await axios.post(`https://graph.facebook.com/v18.0/${media.id}/comments`, {
+        message: ' Awesome content!',
+        access_token: token,
+      });
+      logger.info(`[InstagramBot] Commented on: ${media.id}`);
+      await logToMongo('instagram', { action: 'comment', mediaId: media.id });
+    }
 
-    // Login
-    await page.waitForSelector('input[name="username"]');
-    await page.type('input[name="username"]', process.env.INSTAGRAM_USER || 'your_username');
-    await page.type('input[name="password"]', process.env.INSTAGRAM_PASS || 'your_password');
-    await page.click('button[type="submit"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    // 3 Auto-like recent posts
+    for (let media of recent.slice(0, 3)) {
+      await axios.post(`https://graph.facebook.com/v18.0/${media.id}/likes`, {
+        access_token: token,
+      });
+      logger.info(`[InstagramBot] Liked: ${media.id}`);
+      await logToMongo('instagram', { action: 'like', mediaId: media.id });
+    }
 
-    // Post (navigate to post page, simplified)
-    // Instagram web does not support direct posting via browser automation due to file upload restrictions.
-    // We'll skip actual posting, but here's how you would like and comment:
+    // 4️Auto-reply to comments
+    for (let media of recent) {
+      const comments = await getComments(media.id, token);
+      for (let comment of comments.data) {
+        await axios.post(`https://graph.facebook.com/v18.0/${comment.id}/replies`, {
+          message: 'Thanks for engaging! ',
+          access_token: token,
+        });
+        logger.info(`[InstagramBot] Replied to comment: ${comment.id}`);
+        await logToMongo('instagram', { action: 'reply', commentId: comment.id });
+      }
+    }
 
-    // Like a post (navigate to a post and click like)
-    await page.goto('https://instagram.com/p/CODE/', { waitUntil: 'domcontentloaded' }); // Replace CODE with a real post code
-    await page.waitForSelector('svg[aria-label="Like"]', { visible: true });
-    await page.click('svg[aria-label="Like"]');
-    await page.waitForTimeout(1000);
-
-    // Comment on a post
-    await page.waitForSelector('textarea[aria-label="Add a comment…"]', { visible: true });
-    await page.type('textarea[aria-label="Add a comment…"]', 'Nice post!');
-    await page.click('button[type="submit"]');
-
-    logger.info('[InstagramBot] Task complete');
+    logger.info('[InstagramBot] Task complete ');
   } catch (err) {
-    logger.error('[InstagramBot] Error:', err);
-  } finally {
-    await browser.close();
+    logger.error(`[InstagramBot] Error: ${err.response?.data?.error?.message || err.message}`);
   }
+}
+
+async function uploadImageToInstagram(imageUrl, token, igId) {
+  const { data } = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media`, {
+    image_url: imageUrl,
+    is_carousel_item: true,
+    access_token: token,
+  });
+  return data.id;
+}
+
+async function createCarouselPost(mediaIds, caption, token, igId) {
+  const { data } = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media`, {
+    children: mediaIds,
+    caption,
+    media_type: 'CAROUSEL',
+    access_token: token,
+  });
+  const creationId = data.id;
+
+  const publishResp = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media_publish`, {
+    creation_id: creationId,
+    access_token: token,
+  });
+  return publishResp.data;
+}
+
+async function getRecentMedia(igId, token) {
+  const { data } = await axios.get(`https://graph.facebook.com/v18.0/${igId}/media`, {
+    params: {
+      access_token: token,
+      fields: 'id,caption,media_url,permalink',
+    },
+  });
+  return data.data;
+}
+
+async function getComments(mediaId, token) {
+  return axios.get(`https://graph.facebook.com/v18.0/${mediaId}/comments`, {
+    params: { access_token: token },
+  }).then(res => res.data);
 }
 
 module.exports = runInstagramBot;
