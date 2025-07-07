@@ -8,6 +8,7 @@ const runTelegramBot = require('../bots/telegramBot');
 const runFacebookBot = require('../bots/facebookBot');
 const runRedditBot = require('../bots/redditBot');
 const runGmbBot = require('../bots/gmbBot');
+const runPinterestBot = require('../bots/pinterestBot'); // ✅ Add Pinterest bot
 
 function startCronJobs() {
   logger.info('[CRON] All bots will start on schedule');
@@ -45,6 +46,11 @@ function startCronJobs() {
   cron.schedule('45 * * * *', () => {
     logger.info('[CRON] GmbBot Triggered');
     runGmbBot();
+  });
+
+  cron.schedule('50 * * * *', () => {
+    logger.info('[CRON] PinterestBot Triggered');
+    runPinterestBot();
   });
 }
 
