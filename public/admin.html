@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation Admin Dashboard</title>
+    <link rel="stylesheet" href="/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-robot"></i> Admin Panel</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#dashboard" class="menu-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a></li>
+                <li><a href="#users" class="menu-item" data-section="users">
+                    <i class="fas fa-users"></i> Users
+                </a></li>
+                <li><a href="#bots" class="menu-item" data-section="bots">
+                    <i class="fas fa-robot"></i> Bot Management
+                </a></li>
+                <li><a href="#cron" class="menu-item" data-section="cron">
+                    <i class="fas fa-clock"></i> Cron Jobs
+                </a></li>
+                <li><a href="#logs" class="menu-item" data-section="logs">
+                    <i class="fas fa-file-alt"></i> Logs
+                </a></li>
+                <li><a href="#traps" class="menu-item" data-section="traps">
+                    <i class="fas fa-shield-alt"></i> Traps
+                </a></li>
+                <li><a href="#settings" class="menu-item" data-section="settings">
+                    <i class="fas fa-cog"></i> Settings
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="user-info">
+                    <span>Admin User</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-users">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="active-bots">0</h3>
+                            <p>Active Bots</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="cron-jobs">8</h3>
+                            <p>Cron Jobs</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="trap-triggers">0</h3>
+                            <p>Trap Triggers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>System Status</h3>
+                        <div class="status-list">
+                            <div class="status-item">
+                                <span>MongoDB</span>
+                                <span class="status-badge connected" id="mongo-status">Connected</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Server</span>
+                                <span class="status-badge connected" id="server-status">Running</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Cron Jobs</span>
+                                <span class="status-badge connected" id="cron-status">Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Recent Activity</h3>
+                        <div id="recent-activity" class="activity-list">
+                            <div class="activity-item">
+                                <i class="fas fa-robot"></i>
+                                <span>Instagram bot executed successfully</span>
+                                <small>2 minutes ago</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="content-section">
+                <div class="section-header">
+                    <h2>User Management</h2>
+                    <button class="btn btn-danger" onclick="deleteInactiveUsers()">
+                        <i class="fas fa-trash"></i> Delete Inactive Users
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Last Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Bot Management Section -->
+            <section id="bots" class="content-section">
+                <div class="section-header">
+                    <h2>Bot Management</h2>
+                    <button class="btn btn-success" onclick="runAllBots()">
+                        <i class="fas fa-play"></i> Run All Bots
+                    </button>
+                </div>
+                <div class="bots-grid">
+                    <div class="bot-card" data-bot="instagram">
+                        <div class="bot-header">
+                            <i class="fab fa-instagram"></i>
+                            <h3>Instagram Bot</h3>
+                            <span class="bot-status" id="instagram-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('instagram')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('instagram')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="twitter">
+                        <div class="bot-header">
+                            <i class="fab fa-twitter"></i>
+                            <h3>Twitter Bot</h3>
+                            <span class="bot-status" id="twitter-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('twitter')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('twitter')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="tiktok">
+                        <div class="bot-header">
+                            <i class="fab fa-tiktok"></i>
+                            <h3>TikTok Bot</h3>
+                            <span class="bot-status" id="tiktok-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('tiktok')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('tiktok')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="facebook">
+                        <div class="bot-header">
+                            <i class="fab fa-facebook"></i>
+                            <h3>Facebook Bot</h3>
+                            <span class="bot-status" id="facebook-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('facebook')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('facebook')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="reddit">
+                        <div class="bot-header">
+                            <i class="fab fa-reddit"></i>
+                            <h3>Reddit Bot</h3>
+                            <span class="bot-status" id="reddit-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('reddit')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('reddit')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="telegram">
+                        <div class="bot-header">
+                            <i class="fab fa-telegram"></i>
+                            <h3>Telegram Bot</h3>
+                            <span class="bot-status" id="telegram-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('telegram')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('telegram')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="pinterest">
+                        <div class="bot-header">
+                            <i class="fab fa-pinterest"></i>
+                            <h3>Pinterest Bot</h3>
+                            <span class="bot-status" id="pinterest-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('pinterest')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('pinterest')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bot-card" data-bot="gmb">
+                        <div class="bot-header">
+                            <i class="fab fa-google"></i>
+                            <h3>GMB Bot</h3>
+                            <span class="bot-status" id="gmb-status">Idle</span>
+                        </div>
+                        <div class="bot-actions">
+                            <button class="btn btn-primary" onclick="runBot('gmb')">
+                                <i class="fas fa-play"></i> Run Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewBotLogs('gmb')">
+                                <i class="fas fa-eye"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cron Jobs Section -->
+            <section id="cron" class="content-section">
+                <div class="section-header">
+                    <h2>Cron Job Management</h2>
+                    <button class="btn btn-success" onclick="restartCronJobs()">
+                        <i class="fas fa-refresh"></i> Restart All Jobs
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Bot</th>
+                                <th>Schedule</th>
+                                <th>Next Run</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Instagram Bot</td>
+                                <td>*/15 * * * *</td>
+                                <td id="instagram-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('instagram')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Twitter Bot</td>
+                                <td>5,35 * * * *</td>
+                                <td id="twitter-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('twitter')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>TikTok Bot</td>
+                                <td>10,40 * * * *</td>
+                                <td id="tiktok-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('tiktok')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Facebook Bot</td>
+                                <td>25,55 * * * *</td>
+                                <td id="facebook-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('facebook')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Reddit Bot</td>
+                                <td>30 * * * *</td>
+                                <td id="reddit-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('reddit')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Telegram Bot</td>
+                                <td>20 * * * *</td>
+                                <td id="telegram-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('telegram')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Pinterest Bot</td>
+                                <td>50 * * * *</td>
+                                <td id="pinterest-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('pinterest')">Pause</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>GMB Bot</td>
+                                <td>45 * * * *</td>
+                                <td id="gmb-next">-</td>
+                                <td><span class="status-badge connected">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="pauseCronJob('gmb')">Pause</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Logs Section -->
+            <section id="logs" class="content-section">
+                <div class="section-header">
+                    <h2>System Logs</h2>
+                    <div class="log-controls">
+                        <select id="log-filter" onchange="filterLogs()">
+                            <option value="all">All Logs</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="reddit">Reddit</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="pinterest">Pinterest</option>
+                            <option value="gmb">GMB</option>
+                            <option value="trap">Trap Events</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="refreshLogs()">
+                            <i class="fas fa-refresh"></i> Refresh
+                        </button>
+                        <button class="btn btn-danger" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> Clear Logs
+                        </button>
+                    </div>
+                </div>
+                <div class="logs-container">
+                    <pre id="logs-content">Loading logs...</pre>
+                </div>
+            </section>
+
+            <!-- Traps Section -->
+            <section id="traps" class="content-section">
+                <div class="section-header">
+                    <h2>Trap Management</h2>
+                    <button class="btn btn-primary" onclick="testTrap()">
+                        <i class="fas fa-flask"></i> Test Trap
+                    </button>
+                </div>
+                <div class="traps-grid">
+                    <div class="trap-card">
+                        <h3>Magic Login Trap</h3>
+                        <p>Monitors magic login attempts and triggers notifications</p>
+                        <div class="trap-stats">
+                            <span>Triggers: <strong id="magic-login-triggers">0</strong></span>
+                            <span>Status: <span class="status-badge connected">Active</span></span>
+                        </div>
+                        <button class="btn btn-secondary" onclick="viewTrapLogs('magic-login')">View Logs</button>
+                    </div>
+                </div>
+                <div class="trap-history">
+                    <h3>Recent Trap Events</h3>
+                    <div id="trap-events" class="events-list">
+                        <!-- Trap events will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <div class="section-header">
+                    <h2>System Settings</h2>
+                    <button class="btn btn-success" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>Environment Variables</h3>
+                        <div class="env-vars">
+                            <div class="env-var">
+                                <label>MongoDB URI</label>
+                                <input type="password" id="mongo-uri" placeholder="mongodb://...">
+                                <button class="btn btn-sm btn-secondary" onclick="togglePassword('mongo-uri')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="env-var">
+                                <label>Telegram Bot Token</label>
+                                <input type="password" id="telegram-token" placeholder="Bot token">
+                                <button class="btn btn-sm btn-secondary" onclick="togglePassword('telegram-token')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="env-var">
+                                <label>Twitter Bearer Token</label>
+                                <input type="password" id="twitter-token" placeholder="Bearer token">
+                                <button class="btn btn-sm btn-secondary" onclick="togglePassword('twitter-token')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Notification Settings</h3>
+                        <div class="notification-settings">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="email-notifications" checked>
+                                <span>Email Notifications</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="telegram-notifications" checked>
+                                <span>Telegram Notifications</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="sms-notifications">
+                                <span>SMS Notifications</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/admin.js"></script>
+</body>
+</html>
