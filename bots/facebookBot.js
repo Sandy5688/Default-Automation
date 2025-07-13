@@ -1,25 +1,19 @@
 const axios = require('axios');
-const { MongoClient } = require('mongodb');
 const logger = require('../utils/logger');
+const { supabase } = require('../services/supabaseClient');
 
 const fbAccessToken = process.env.FB_ACCESS_TOKEN;
 const fbPageId = process.env.FB_PAGE_ID;
-const mongoUri = process.env.MONGO_URI;
 
-async function logToMongo(activity) {
-  if (!mongoUri) return;
-  const client = new MongoClient(mongoUri);
+async function logToSupabase(activity) {
   try {
-    await client.connect();
-    const db = client.db('automation');
-    await db.collection('facebook_logs').insertOne({
+    await supabase.from('engagements').insert([{
+      platform: 'facebook',
       ...activity,
-      timestamp: new Date()
-    });
+      created_at: new Date().toISOString()
+    }]);
   } catch (err) {
-    logger.error(`[FacebookBot] MongoDB log error: ${err.message}`);
-  } finally {
-    await client.close();
+    logger.error(`[FacebookBot] Supabase log error: ${err.message}`);
   }
 }
 
@@ -28,7 +22,7 @@ async function getProfile() {
     `https://graph.facebook.com/v18.0/me?access_token=${fbAccessToken}`
   );
   logger.info(`[FacebookBot] Profile: ${JSON.stringify(resp.data)}`);
-  await logToMongo({ action: 'getProfile', data: resp.data });
+  await logToSupabase({ action: 'getProfile', data: resp.data });
   return resp.data;
 }
 
@@ -38,7 +32,7 @@ async function postContent(message) {
     { message, access_token: fbAccessToken }
   );
   logger.info('[FacebookBot] Post published');
-  await logToMongo({ action: 'postContent', message, resp: resp.data });
+  await logToSupabase({ action: 'postContent', message, resp: resp.data });
   return resp.data;
 }
 
@@ -48,33 +42,40 @@ async function commentOnContent(postId, message) {
     { message, access_token: fbAccessToken }
   );
   logger.info(`[FacebookBot] Commented on ${postId}`);
-  await logToMongo({ action: 'commentOnContent', postId, message, resp: resp.data });
+  await logToSupabase({ action: 'commentOnContent', postId, message, resp: resp.data });
 }
 
 async function autoReplyToComments(postId, replyMessage) {
-  // Not implemented: would require polling comments and replying.
   logger.info('[FacebookBot] autoReplyToComments: Not implemented');
+  await logToSupabase({ action: 'autoReplyToComments', status: 'not-implemented', postId });
 }
 
 async function runFacebookBot() {
   logger.info('[FacebookBot] Starting (Axios-based)');
+
   if (!fbAccessToken || !fbPageId) {
-    logger.error('[FacebookBot] FB_ACCESS_TOKEN or FB_PAGE_ID not set in .env');
+    const msg = '[FacebookBot] FB_ACCESS_TOKEN or FB_PAGE_ID not set in .env';
+    logger.error(msg);
+    await logToSupabase({ action: 'runFacebookBot', error: msg });
     return;
   }
+
   try {
     await getProfile();
     const post = await postContent('Hello from Axios Facebook bot!');
     const postId = post?.id;
+
     if (postId) {
       await commentOnContent(postId, 'Nice post!');
       await autoReplyToComments(postId, 'Thanks for your comment!');
     }
+
     logger.info('[FacebookBot] Task complete');
-    await logToMongo({ action: 'runFacebookBot', status: 'complete' });
+    await logToSupabase({ action: 'runFacebookBot', status: 'complete' });
   } catch (error) {
-    logger.error(`[FacebookBot] Error: ${error.response?.data?.error?.message || error.message}`);
-    await logToMongo({ action: 'runFacebookBot', error: error.message });
+    const msg = error.response?.data?.error?.message || error.message;
+    logger.error(`[FacebookBot] Error: ${msg}`);
+    await logToSupabase({ action: 'runFacebookBot', error: msg });
   }
 }
 

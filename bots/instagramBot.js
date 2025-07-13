@@ -1,6 +1,18 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
-const { logToMongo } = require('../utils/mongoLogger');
+const { supabase } = require('../services/supabaseClient');
+
+async function logToSupabase(activity) {
+  try {
+    await supabase.from('engagements').insert([{
+      platform: 'instagram',
+      ...activity,
+      created_at: new Date().toISOString()
+    }]);
+  } catch (err) {
+    logger.error(`[InstagramBot] Supabase log error: ${err.message}`);
+  }
+}
 
 async function runInstagramBot() {
   logger.info('[InstagramBot] Starting (Graph API)');
@@ -10,56 +22,63 @@ async function runInstagramBot() {
   const igId = process.env.IG_BUSINESS_ID;
 
   if (!token || !pageId || !igId) {
-    logger.error('[InstagramBot] Missing FB_ACCESS_TOKEN, FB_PAGE_ID, or IG_BUSINESS_ID');
+    const msg = '[InstagramBot] Missing FB_ACCESS_TOKEN, FB_PAGE_ID, or IG_BUSINESS_ID';
+    logger.error(msg);
+    await logToSupabase({ action: 'runInstagramBot', error: msg });
     return;
   }
 
   try {
-    // 1 Auto-post multiple images
+    // 1. Auto-post multiple images (Carousel)
     const mediaIds = await Promise.all([
       uploadImageToInstagram('https://example.com/image1.jpg', token, igId),
       uploadImageToInstagram('https://example.com/image2.jpg', token, igId),
     ]);
     const postResp = await createCarouselPost(mediaIds, 'Auto-posted from bot', token, igId);
     logger.info(`[InstagramBot] Carousel post created: ${postResp.id}`);
-    await logToMongo('instagram', { action: 'post', id: postResp.id });
+    await logToSupabase({ action: 'createCarouselPost', mediaIds, response: postResp });
 
-    // 2 Auto-comment on recent media
+    // 2. Auto-comment on recent media
     const recent = await getRecentMedia(igId, token);
     for (let media of recent) {
-      await axios.post(`https://graph.facebook.com/v18.0/${media.id}/comments`, {
-        message: ' Awesome content!',
-        access_token: token,
-      });
+      const commentResp = await axios.post(
+        `https://graph.facebook.com/v18.0/${media.id}/comments`,
+        { message: 'Awesome content!', access_token: token }
+      );
       logger.info(`[InstagramBot] Commented on: ${media.id}`);
-      await logToMongo('instagram', { action: 'comment', mediaId: media.id });
+      await logToSupabase({ action: 'comment', mediaId: media.id, response: commentResp.data });
     }
 
-    // 3 Auto-like recent posts
+    // 3. Auto-like recent posts
     for (let media of recent.slice(0, 3)) {
-      await axios.post(`https://graph.facebook.com/v18.0/${media.id}/likes`, {
-        access_token: token,
-      });
+      const likeResp = await axios.post(
+        `https://graph.facebook.com/v18.0/${media.id}/likes`,
+        { access_token: token }
+      );
       logger.info(`[InstagramBot] Liked: ${media.id}`);
-      await logToMongo('instagram', { action: 'like', mediaId: media.id });
+      await logToSupabase({ action: 'like', mediaId: media.id, response: likeResp.data });
     }
 
-    // 4️Auto-reply to comments
+    // 4. Auto-reply to comments
     for (let media of recent) {
       const comments = await getComments(media.id, token);
       for (let comment of comments.data) {
-        await axios.post(`https://graph.facebook.com/v18.0/${comment.id}/replies`, {
-          message: 'Thanks for engaging! ',
-          access_token: token,
-        });
+        const replyResp = await axios.post(
+          `https://graph.facebook.com/v18.0/${comment.id}/replies`,
+          { message: 'Thanks for engaging!', access_token: token }
+        );
         logger.info(`[InstagramBot] Replied to comment: ${comment.id}`);
-        await logToMongo('instagram', { action: 'reply', commentId: comment.id });
+        await logToSupabase({ action: 'reply', commentId: comment.id, response: replyResp.data });
       }
     }
 
-    logger.info('[InstagramBot] Task complete ');
+    logger.info('[InstagramBot] Task complete');
+    await logToSupabase({ action: 'runInstagramBot', status: 'complete' });
+
   } catch (err) {
-    logger.error(`[InstagramBot] Error: ${err.response?.data?.error?.message || err.message}`);
+    const msg = err.response?.data?.error?.message || err.message;
+    logger.error(`[InstagramBot] Error: ${msg}`);
+    await logToSupabase({ action: 'runInstagramBot', error: msg });
   }
 }
 
@@ -73,19 +92,19 @@ async function uploadImageToInstagram(imageUrl, token, igId) {
 }
 
 async function createCarouselPost(mediaIds, caption, token, igId) {
-  const { data } = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media`, {
+  const { data: creation } = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media`, {
     children: mediaIds,
     caption,
     media_type: 'CAROUSEL',
     access_token: token,
   });
-  const creationId = data.id;
 
-  const publishResp = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media_publish`, {
-    creation_id: creationId,
+  const { data: publish } = await axios.post(`https://graph.facebook.com/v18.0/${igId}/media_publish`, {
+    creation_id: creation.id,
     access_token: token,
   });
-  return publishResp.data;
+
+  return publish;
 }
 
 async function getRecentMedia(igId, token) {
@@ -99,9 +118,10 @@ async function getRecentMedia(igId, token) {
 }
 
 async function getComments(mediaId, token) {
-  return axios.get(`https://graph.facebook.com/v18.0/${mediaId}/comments`, {
+  const { data } = await axios.get(`https://graph.facebook.com/v18.0/${mediaId}/comments`, {
     params: { access_token: token },
-  }).then(res => res.data);
+  });
+  return data;
 }
 
 module.exports = runInstagramBot;

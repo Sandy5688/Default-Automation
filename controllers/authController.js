@@ -1,18 +1,39 @@
-const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/generateToken');
 const { triggerTrap } = require('../traps/magicLoginTrap');
+const { supabase } = require('../services/supabaseClient');
 
 exports.signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
   try {
-    if (await User.findOne({ email })) {
+    // Check if user exists
+    const { data: existing, error: findErr } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (existing) {
       return res.status(400).json({ error: 'Email already exists' });
     }
+
+    // Hash password
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hash });
-    res.status(201).json({ message: 'User created', user: { id: user._id, name, email } });
+
+    // Insert user (remove .single() here)
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{ name, email, password: hash, phone, last_active: new Date() }])
+      .select('id, name, email'); // no .single()
+
+    if (error) {
+      console.error('Signup insert error:', error);
+      return res.status(500).json({ error: 'Signup failed', details: error.message });
+    }
+
+    res.status(201).json({ message: 'User created', user: data });
   } catch (err) {
+    console.error('Signup exception:', err);
     res.status(500).json({ error: 'Signup failed' });
   }
 };
@@ -20,13 +41,17 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: 'Invalid credentials' });
-    user.lastActive = new Date();
-    await user.save();
-    res.json({ message: 'Login successful', user: { id: user._id, name: user.name, email } });
+    // Update last_active
+    await supabase.from('users').update({ last_active: new Date() }).eq('email', email);
+    res.json({ message: 'Login successful', user: { id: user.id, name: user.name, email: user.email } });
   } catch (err) {
     res.status(500).json({ error: 'Login failed' });
   }
@@ -35,13 +60,18 @@ exports.login = async (req, res) => {
 exports.sendMagic = async (req, res) => {
   const { email } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
     if (!user) return res.status(400).json({ error: 'User not found' });
     const token = generateToken(24);
-    user.magicToken = token;
-    user.magicTokenExpires = new Date(Date.now() + 1000 * 60 * 15); // 15 min
-    await user.save();
-    // In real app, email the link. Here, just return it.
+    const expires = new Date(Date.now() + 1000 * 60 * 15);
+    await supabase
+      .from('users')
+      .update({ magic_token: token, magic_token_expires: expires })
+      .eq('email', email);
     res.json({ magicLink: `/auth/magic/${token}` });
   } catch (err) {
     res.status(500).json({ error: 'Failed to generate magic link' });
@@ -51,15 +81,24 @@ exports.sendMagic = async (req, res) => {
 exports.magicLogin = async (req, res) => {
   const { token } = req.params;
   try {
-    const user = await User.findOne({ magicToken: token, magicTokenExpires: { $gt: new Date() } });
+    const now = new Date().toISOString();
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('magic_token', token)
+      .gt('magic_token_expires', now)
+      .single();
     if (!user) return res.status(400).json({ error: 'Invalid or expired token' });
-    user.lastActive = new Date();
-    user.magicToken = undefined;
-    user.magicTokenExpires = undefined;
-    await user.save();
-    // Trigger trap via Axios
+    await supabase
+      .from('users')
+      .update({
+        last_active: new Date(),
+        magic_token: null,
+        magic_token_expires: null,
+      })
+      .eq('id', user.id);
     await triggerTrap(user.email, 'magic-login');
-    res.json({ message: 'Magic login successful', user: { id: user._id, name: user.name, email: user.email } });
+    res.json({ message: 'Magic login successful', user: { id: user.id, name: user.name, email: user.email } });
   } catch (err) {
     res.status(500).json({ error: 'Magic login failed' });
   }
@@ -67,9 +106,12 @@ exports.magicLogin = async (req, res) => {
 
 exports.deleteInactive = async (req, res) => {
   try {
-    const cutoff = new Date(Date.now() - 1000 * 60 * 60 * 24 * 30); // 30 days
-    const result = await User.deleteMany({ lastActive: { $lt: cutoff } });
-    res.json({ deleted: result.deletedCount });
+    const cutoff = new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString();
+    const { data, error } = await supabase
+      .from('users')
+      .delete()
+      .lt('last_active', cutoff);
+    res.json({ deleted: data ? data.length : 0 });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete inactive users' });
   }

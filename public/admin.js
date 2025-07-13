@@ -151,12 +151,12 @@ function updateUsersTable(users) {
   users.forEach((user) => {
     const row = document.createElement("tr")
     row.innerHTML = `
-            <td>${user._id}</td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td>${formatTime(user.lastActive)}</td>
+            <td>${user.id}</td>
+            <td>${user.email || ""}</td>
+            <td>${user.phone || ""}</td>
+            <td>${formatTime(user.created_at)}</td>
             <td>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}')">
+                <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </td>

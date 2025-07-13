@@ -14,6 +14,9 @@ router.delete("/users/:userId", admin.deleteUser)
 // Bot management routes
 router.get("/bots/status", admin.getBotStatus)
 router.post("/bots/:botName/run", admin.runBot)
+router.post("/bots/:botName/pause", admin.pauseBot)
+router.post("/bots/:botName/restart", admin.resumeBot)
+router.post('/bots/restart', admin.restartCronJobs)
 
 // Cron job management routes
 router.post("/cron/restart", admin.restartCronJobs)
@@ -28,5 +31,5 @@ router.get("/traps", admin.getTrapData)
 
 // Settings management routes
 router.post("/settings", admin.saveSettings)
-
+router.get("/settings", admin.getSettings)
 module.exports = router

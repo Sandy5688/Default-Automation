@@ -1,26 +1,16 @@
 const axios = require('axios');
-const { MongoClient } = require('mongodb');
 const logger = require('../utils/logger');
+const { supabase } = require('../services/supabaseClient');
 
 const bearerToken = process.env.TWITTER_BEARER_TOKEN;
 const userId = process.env.TWITTER_USER_ID;
-const mongoUri = process.env.MONGO_URI;
 
-async function logToMongo(activity) {
-  if (!mongoUri) return;
-  const client = new MongoClient(mongoUri);
-  try {
-    await client.connect();
-    const db = client.db('automation');
-    await db.collection('twitter_logs').insertOne({
-      ...activity,
-      timestamp: new Date()
-    });
-  } catch (err) {
-    logger.error(`[TwitterBot] MongoDB log error: ${err.message}`);
-  } finally {
-    await client.close();
-  }
+async function logToSupabase(activity) {
+  await supabase.from('engagements').insert([{
+    platform: 'twitter',
+    ...activity,
+    created_at: new Date().toISOString()
+  }]);
 }
 
 async function getProfile() {
@@ -29,7 +19,7 @@ async function getProfile() {
     { headers: { Authorization: `Bearer ${bearerToken}` } }
   );
   logger.info(`[TwitterBot] Profile: ${JSON.stringify(resp.data)}`);
-  await logToMongo({ action: 'getProfile', data: resp.data });
+  await logToSupabase({ action: 'getProfile', data: resp.data });
   return resp.data;
 }
 
@@ -40,7 +30,7 @@ async function postContent(text) {
     { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
   );
   logger.info(`[TwitterBot] Tweeted: ${text}`);
-  await logToMongo({ action: 'postContent', text, resp: resp.data });
+  await logToSupabase({ action: 'postContent', text, resp: resp.data });
   return resp.data;
 }
 
@@ -52,19 +42,17 @@ async function likeContent(tweetId) {
     { headers: { Authorization: `Bearer ${bearerToken}` } }
   );
   logger.info(`[TwitterBot] Liked tweet: ${tweetId}`);
-  await logToMongo({ action: 'likeContent', tweetId });
+  await logToSupabase({ action: 'likeContent', tweetId });
 }
 
 async function commentOnContent(tweetId, text) {
-  // Twitter API v2 does not support direct replies via a single endpoint.
-  // Instead, post a tweet with in_reply_to_tweet_id.
   const resp = await axios.post(
     'https://api.twitter.com/2/tweets',
     { text, reply: { in_reply_to_tweet_id: tweetId } },
     { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
   );
   logger.info(`[TwitterBot] Replied to ${tweetId}: ${text}`);
-  await logToMongo({ action: 'commentOnContent', tweetId, text, resp: resp.data });
+  await logToSupabase({ action: 'commentOnContent', tweetId, text, resp: resp.data });
 }
 
 async function autoReplyToComments(tweetId, replyText) {
@@ -94,12 +82,11 @@ async function runTwitterBot() {
     }
 
     logger.info('[TwitterBot] Automation complete');
-    await logToMongo({ action: 'runTwitterBot', status: 'complete' });
+    await logToSupabase({ action: 'runTwitterBot', status: 'complete' });
   } catch (error) {
     logger.error(`[TwitterBot] Error: ${error.response?.data?.detail || error.message}`);
-    await logToMongo({ action: 'runTwitterBot', error: error.message });
+    await logToSupabase({ action: 'runTwitterBot', error: error.message });
   }
 }
 
 module.exports = runTwitterBot;
-

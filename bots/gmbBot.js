@@ -1,37 +1,37 @@
 const axios = require('axios');
-const { MongoClient } = require('mongodb');
 const logger = require('../utils/logger');
+const { supabase } = require('../services/supabaseClient');
 
 const gmbAccessToken = process.env.GMB_ACCESS_TOKEN;
 const gmbLocationId = process.env.GMB_LOCATION_ID;
-const mongoUri = process.env.MONGO_URI;
 
-async function logToMongo(activity) {
-  if (!mongoUri) return;
-  const client = new MongoClient(mongoUri);
+async function logToSupabase(activity) {
   try {
-    await client.connect();
-    const db = client.db('automation');
-    await db.collection('gmb_logs').insertOne({
+    await supabase.from('engagements').insert([{
+      platform: 'google-my-business',
       ...activity,
-      timestamp: new Date()
-    });
+      created_at: new Date().toISOString()
+    }]);
   } catch (err) {
-    logger.error(`[GmbBot] MongoDB log error: ${err.message}`);
-  } finally {
-    await client.close();
+    logger.error(`[GmbBot] Supabase log error: ${err.message}`);
   }
 }
 
 async function getProfile() {
-  // GMB API does not provide a direct profile endpoint.
+  // GMB API doesn’t expose a direct profile endpoint.
   logger.info('[GmbBot] getProfile: Not supported');
+  await logToSupabase({ action: 'getProfile', note: 'Not supported by GMB API' });
 }
 
 async function postContent(summary) {
+  const payload = {
+    languageCode: 'en',
+    summary
+  };
+
   const resp = await axios.post(
     `https://mybusiness.googleapis.com/v4/accounts/${gmbLocationId}/localPosts`,
-    { languageCode: 'en', summary },
+    payload,
     {
       headers: {
         'Authorization': `Bearer ${gmbAccessToken}`,
@@ -39,24 +39,30 @@ async function postContent(summary) {
       }
     }
   );
+
   logger.info('[GmbBot] Post created');
-  await logToMongo({ action: 'postContent', summary, resp: resp.data });
+  await logToSupabase({ action: 'postContent', summary, response: resp.data });
 }
 
 async function runGmbBot() {
   logger.info('[GmbBot] Starting (Axios-based)');
+
   if (!gmbAccessToken || !gmbLocationId) {
-    logger.error('[GmbBot] GMB_ACCESS_TOKEN or GMB_LOCATION_ID not set in .env');
+    const errMsg = '[GmbBot] GMB_ACCESS_TOKEN or GMB_LOCATION_ID not set in .env';
+    logger.error(errMsg);
+    await logToSupabase({ action: 'runGmbBot', error: errMsg });
     return;
   }
+
   try {
-    await getProfile();
+    await getProfile(); // Informational/logging only
     await postContent('Bot update!');
     logger.info('[GmbBot] Task complete');
-    await logToMongo({ action: 'runGmbBot', status: 'complete' });
+    await logToSupabase({ action: 'runGmbBot', status: 'complete' });
   } catch (error) {
-    logger.error(`[GmbBot] Error: ${error.response?.data?.error?.message || error.message}`);
-    await logToMongo({ action: 'runGmbBot', error: error.message });
+    const errMsg = error.response?.data?.error?.message || error.message;
+    logger.error(`[GmbBot] Error: ${errMsg}`);
+    await logToSupabase({ action: 'runGmbBot', error: errMsg });
   }
 }
 

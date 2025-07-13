@@ -2,20 +2,26 @@
   "name": "gh_repo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.5",
     "axios": "^1.10.0",
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3",
     "twilio": "^5.7.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
