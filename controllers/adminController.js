@@ -47,7 +47,7 @@ async function getBotInterval(botName) {
   // Validate: must be a non-empty string
   if (typeof interval !== 'string' || !interval.length) {
     interval = '*/15 * * * *';
-    logger.warn(`[Admin] Invalid cron interval for ${botName}, using default: ${interval}`);
+    logger.info(`[Admin] Invalid cron interval for ${botName}, using default: ${interval}`);
   }
   return interval;
 }

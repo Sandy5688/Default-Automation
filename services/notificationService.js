@@ -29,7 +29,7 @@ async function sendTelegramAlert(message) {
   if (process.env.ENABLE_TELEGRAM !== 'true') return;
 
   if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
-    return logger.warn('[TELEGRAM] Missing token or chat_id');
+    return logger.info('[TELEGRAM] Missing token or chat_id');
   }
 
   try {
@@ -52,7 +52,7 @@ async function sendTwilioAlert(message, via = 'sms') {
   const to = via === 'whatsapp' ? process.env.ALERT_WHATSAPP_TO : process.env.ALERT_SMS_TO;
 
   if (!accountSid || !authToken || !from || !to) {
-    return logger.warn(`[TWILIO-${via}] Missing credentials`);
+    return logger.info(`[TWILIO-${via}] Missing credentials`);
   }
 
   const client = require('twilio')(accountSid, authToken);

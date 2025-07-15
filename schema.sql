@@ -200,3 +200,24 @@ create table if not exists generated_posts (
   queued boolean default false,
   created_at timestamp with time zone default now()
 );
+-- Cache table for AI outputs (optional)
+create table if not exists ai_outputs (
+  id uuid primary key default gen_random_uuid(),
+  platform text,
+  prompt text,
+  output text,
+  created_at timestamp default now()
+);
+
+alter table blogs
+  add column slug text unique,
+  add column content_markdown text,
+  add column content_html text,
+  add column image_prompts text[],
+  add column published_at timestamp with time zone,
+  add column medium_url text,
+  add column substack_url text,
+  add column reddit_url text,
+  add column gmb_url text,
+  add column syndication_status jsonb default '{}'::jsonb;
+  
