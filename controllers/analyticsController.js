@@ -18,7 +18,7 @@ exports.getRewardStats = async (req, res) => {
   try {
     const { data, error } = await supabase.rpc('get_reward_stats_by_type');
     if (error) throw error;
-    res.json({ rewards: data });
+    res.json(data); // Return array directly
   } catch (err) {
     logger.error(`[ANALYTICS] Reward stats error: ${err.message}`);
     res.status(500).json({ error: 'Failed to fetch reward stats' });

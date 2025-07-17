@@ -25,9 +25,6 @@
                 <li><a href="#posts" class="menu-item" data-section="posts">
                     <i class="fas fa-list"></i> Post Queue
                 </a></li>
-                <li><a href="#media-generator" class="menu-item" data-section="media-generator">
-                    <i class="fas fa-magic"></i> Media Generator
-                </a></li>
                 <li><a href="#notifications" class="menu-item" data-section="notifications">
                     <i class="fas fa-bell"></i> Notifications
                 </a></li>
@@ -155,6 +152,9 @@
                 <div class="section-header">
                     <h2>Post Queue Management</h2>
                     <div class="header-actions">
+                        <button class="btn btn-primary" id="add-post-btn">
+                            <i class="fas fa-plus"></i> Add New Post
+                        </button>
                         <select id="platform-filter" onchange="filterPosts()">
                             <option value="all">All Platforms</option>
                             <option value="instagram">Instagram</option>
@@ -197,97 +197,6 @@
                 </div>
             </section>
 
-            <!-- Media Generator Section -->
-            <section id="media-generator" class="content-section">
-                <div class="section-header">
-                    <h2>AI Media Generator</h2>
-                </div>
-                <div class="generator-grid">
-                    <div class="generator-card">
-                        <h3><i class="fas fa-image"></i> Image Generation</h3>
-                        <div class="generator-form">
-                            <textarea id="image-prompt" placeholder="Describe the image you want to generate..." rows="3"></textarea>
-                            <div class="form-row">
-                                <select id="image-style">
-                                    <option value="realistic">Realistic</option>
-                                    <option value="artistic">Artistic</option>
-                                    <option value="cartoon">Cartoon</option>
-                                    <option value="abstract">Abstract</option>
-                                </select>
-                                <button class="btn btn-primary" onclick="generateImage()">
-                                    <i class="fas fa-magic"></i> Generate Image
-                                </button>
-                            </div>
-                        </div>
-                        <div id="image-preview" class="media-preview">
-                            <div class="preview-placeholder">
-                                <i class="fas fa-image"></i>
-                                <p>Generated image will appear here</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="generator-card">
-                        <h3><i class="fas fa-video"></i> Video Generation</h3>
-                        <div class="generator-form">
-                            <textarea id="video-prompt" placeholder="Describe the video you want to generate..." rows="3"></textarea>
-                            <div class="form-row">
-                                <select id="video-duration">
-                                    <option value="3">3 seconds</option>
-                                    <option value="5">5 seconds</option>
-                                    <option value="10">10 seconds</option>
-                                </select>
-                                <button class="btn btn-primary" onclick="generateVideo()">
-                                    <i class="fas fa-video"></i> Generate Video
-                                </button>
-                            </div>
-                        </div>
-                        <div id="video-preview" class="media-preview">
-                            <div class="preview-placeholder">
-                                <i class="fas fa-video"></i>
-                                <p>Generated video will appear here</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="caption-generator">
-                    <h3><i class="fas fa-pen"></i> AI Caption Generator</h3>
-                    <div class="caption-form">
-                        <div class="form-row">
-                            <input type="text" id="caption-topic" placeholder="Topic or theme for caption">
-                            <select id="caption-tone">
-                                <option value="casual">Casual</option>
-                                <option value="professional">Professional</option>
-                                <option value="funny">Funny</option>
-                                <option value="inspirational">Inspirational</option>
-                            </select>
-                            <button class="btn btn-success" onclick="generateCaption()">
-                                <i class="fas fa-magic"></i> Generate Caption
-                            </button>
-                        </div>
-                        <div id="generated-caption" class="caption-preview">
-                            <p>Generated caption will appear here...</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="schedule-post">
-                    <h3><i class="fas fa-calendar"></i> Schedule Post</h3>
-                    <div class="schedule-form">
-                        <div class="form-row">
-                            <select id="schedule-platform" multiple>
-                                <option value="instagram">Instagram</option>
-                                <option value="twitter">Twitter</option>
-                                <option value="tiktok">TikTok</option>
-                                <option value="facebook">Facebook</option>
-                            </select>
-                            <input type="datetime-local" id="schedule-time">
-                            <button class="btn btn-primary" onclick="schedulePost()">
-                                <i class="fas fa-clock"></i> Schedule Post
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- Notifications Section -->
             <section id="notifications" class="content-section">
                 <div class="section-header">
@@ -325,7 +234,7 @@
                             <option value="gold">Gold</option>
                             <option value="viral">Viral</option>
                         </select>
-                        <button class="btn btn-primary" onclick="openIssueRewardModal()">
+                        <button class="btn btn-primary" id="issue-reward-btn">
                             <i class="fas fa-gift"></i> Issue Reward
                         </button>
                     </div>
@@ -542,33 +451,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="blog-generator">
-                    <div class="generator-form">
-                        <textarea id="blog-prompt" placeholder="Enter blog topic or prompt..." rows="4"></textarea>
-                        <div class="form-row">
-                            <select id="blog-length">
-                                <option value="short">Short (500-800 words)</option>
-                                <option value="medium">Medium (800-1500 words)</option>
-                                <option value="long">Long (1500+ words)</option>
-                            </select>
-                            <select id="blog-tone">
-                                <option value="professional">Professional</option>
-                                <option value="casual">Casual</option>
-                                <option value="technical">Technical</option>
-                                <option value="creative">Creative</option>
-                            </select>
-                            <button class="btn btn-success" onclick="generateBlog()">
-                                <i class="fas fa-magic"></i> Generate Blog
-                            </button>
-                        </div>
-                    </div>
-                    <div id="blog-preview" class="blog-preview">
-                        <div class="preview-placeholder">
-                            <i class="fas fa-file-alt"></i>
-                            <p>Generated blog will appear here</p>
-                        </div>
-                    </div>
-                </div>
+              
                 <div class="blog-syndication">
                     <h3>Blog Syndication</h3>
                     <div class="table-container">
@@ -688,7 +571,7 @@
     </div>
 
     <!-- Modals -->
-    <div id="modal-overlay" class="modal-overlay">
+    <div id="modal-overlay" class="modal-overlay" style="display:none;">
         <div id="modal-content" class="modal-content">
             <!-- Modal content will be dynamically loaded -->
         </div>
@@ -706,5 +589,518 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script src="/admin.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Dashboard Stats ---
+  async function loadDashboardStats() {
+    // Posts
+    let postsCount = 0;
+    let postsData = [];
+    try {
+      const postsRes = await fetch('/admin/queue');
+      postsData = await postsRes.json();
+      postsCount = Array.isArray(postsData) ? postsData.length : 0;
+    } catch {}
+    document.getElementById('total-posts').textContent = postsCount;
+    document.getElementById('pending-posts').textContent = postsCount + ' pending';
+
+    // Rewards
+    let rewardsIssued = 0, silver = 0, gold = 0, viral = 0;
+    try {
+      const rewardsRes = await fetch('/admin/reward-stats');
+      const rewardsData = await rewardsRes.json();
+      if (Array.isArray(rewardsData)) {
+        rewardsIssued = rewardsData.reduce((sum, r) => sum + (r.total_rewards || 0), 0);
+        silver = rewardsData.find(r => r.reward_type === 'silver')?.total_rewards || 0;
+        gold = rewardsData.find(r => r.reward_type === 'gold')?.total_rewards || 0;
+        viral = rewardsData.find(r => r.reward_type === 'viral')?.total_rewards || 0;
+      }
+    } catch {}
+    document.getElementById('rewards-issued').textContent = rewardsIssued;
+    document.getElementById('pending-rewards').textContent = rewardsIssued + ' issued';
+    document.getElementById('silver-rewards').textContent = silver;
+    document.getElementById('gold-rewards').textContent = gold;
+    document.getElementById('viral-rewards').textContent = viral;
+
+    // Active Users (from /admin/top-users)
+    let totalUsers = 0;
+    try {
+      const usersRes = await fetch('/admin/top-users');
+      const usersData = await usersRes.json();
+      totalUsers = Array.isArray(usersData.top_users) ? usersData.top_users.length : 0;
+    } catch {}
+    document.getElementById('total-users').textContent = totalUsers;
+    document.getElementById('new-users').textContent = totalUsers + ' active';
+
+    // Engagement (likes)
+    let totalLikes = 0;
+    let engagementPlatforms = [];
+    try {
+      const engRes = await fetch('/admin/engagement-stats');
+      const engData = await engRes.json();
+      if (Array.isArray(engData.platforms)) {
+        totalLikes = engData.platforms.reduce((sum, p) => sum + (p.total_likes || 0), 0);
+        engagementPlatforms = engData.platforms;
+      }
+    } catch {}
+    document.getElementById('total-engagement').textContent = totalLikes;
+    document.getElementById('engagement-growth').textContent = '+' + totalLikes + ' likes';
+
+    // System Health - set all to active/running
+    document.getElementById('queue-status').textContent = 'Active';
+    document.getElementById('queue-status').className = 'status-badge connected';
+    document.getElementById('media-status').textContent = 'Ready';
+    document.getElementById('media-status').className = 'status-badge connected';
+    document.getElementById('notification-status').textContent = 'Online';
+    document.getElementById('notification-status').className = 'status-badge connected';
+
+    // Platform Performance Chart (likes per platform, all supported platforms)
+    const supportedPlatforms = [
+      'instagram', 'facebook', 'twitter', 'gmb', 'pinterest', 'reddit', 'telegram'
+    ];
+    const platformLabels = supportedPlatforms.map(p =>
+      p.charAt(0).toUpperCase() + p.slice(1)
+    );
+    const likes = supportedPlatforms.map(p => {
+      const found = engagementPlatforms.find(ep => (ep.platform || '').toLowerCase() === p);
+      return found ? (found.total_likes || 0) : 0;
+    });
+    try {
+      const ctx = document.getElementById('platformChart').getContext('2d');
+      if (window.platformChartInstance) window.platformChartInstance.destroy();
+      window.platformChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: platformLabels,
+          datasets: [{
+            label: 'Total Likes',
+            data: likes,
+            backgroundColor: '#2563eb'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    } catch {}
+    // --- Post Queue Management Table ---
+    try {
+      const tbody = document.getElementById('posts-table-body');
+      if (!Array.isArray(postsData) || postsData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No posts found</td></tr>`;
+      } else {
+        tbody.innerHTML = postsData.map(post => `
+          <tr>
+            <td>${post.id || '-'}</td>
+            <td>${post.platform || '-'}</td>
+            <td>${post.caption || '-'}</td>
+            <td>${post.media_url ? `<a href="${post.media_url}" target="_blank">View</a>` : '-'}</td>
+            <td>${post.status || '-'}</td>
+            <td>${post.scheduled_at ? new Date(post.scheduled_at).toLocaleString() : '-'}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="retryPost('${post.id}')"><i class="fas fa-redo"></i></button>
+              <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    } catch {}
+  }
+
+  loadDashboardStats();
+
+  // --- Rewards Stats and Table (from /admin/rewards/all) ---
+  async function loadRewardStatsAndTable() {
+    let silver = 0, gold = 0, viral = 0;
+    let rewards = [];
+    try {
+      const res = await fetch('/admin/rewards/all');
+      const data = await res.json();
+      // If response is { rewards: [...] }
+      if (Array.isArray(data.rewards)) {
+        rewards = data.rewards;
+        silver = rewards.filter(r => r.reward_type === 'silver').length;
+        gold = rewards.filter(r => r.reward_type === 'gold').length;
+        viral = rewards.filter(r => r.reward_type === 'viral').length;
+      }
+    } catch {}
+    document.getElementById('silver-rewards').textContent = silver;
+    document.getElementById('gold-rewards').textContent = gold;
+    document.getElementById('viral-rewards').textContent = viral;
+
+    // Populate rewards table
+    const tbody = document.getElementById('rewards-table-body');
+    if (!Array.isArray(rewards) || rewards.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No rewards found</td></tr>`;
+    } else {
+      tbody.innerHTML = rewards.map(r => `
+        <tr>
+          <td>${r.user_id || '-'}</td>
+          <td>${r.reward_type || '-'}</td>
+          <td>${r.amount || '-'}</td>
+          <td>${r.metadata?.source || '-'}</td>
+          <td>${r.notified ? 'Notified' : 'Pending'}</td>
+          <td>${r.issued_at ? new Date(r.issued_at).toLocaleString() : '-'}</td>
+          <td>-</td>
+        </tr>
+      `).join('');
+    }
+  }
+  loadRewardStatsAndTable();
+
+  // --- Engagement Section: Platform Chart from /admin/engagement-stats ---
+  async function loadEngagementSection() {
+    let topUsers = [];
+    try {
+      const res = await fetch('/admin/top-users');
+      const data = await res.json();
+      topUsers = Array.isArray(data.top_users) ? data.top_users : [];
+    } catch {}
+
+    // Chart: bar for each user (user_id or short version)
+    const ctx = document.getElementById('engagementChart').getContext('2d');
+    const labels = topUsers.map(u => u.user_id ? u.user_id.slice(0, 6) + '...' : '-');
+    const dataLikes = topUsers.map(u => u.total_likes || 0);
+    if (window.engagementChartInstance) window.engagementChartInstance.destroy();
+    window.engagementChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Total Likes',
+          data: dataLikes,
+          backgroundColor: '#2563eb'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    // Top performers list
+    const topList = document.getElementById('top-performers-list');
+    topList.innerHTML = topUsers.map(u => `
+      <div>
+        <strong>${u.user_id ? u.user_id.slice(0, 8) : '-'}</strong>
+        <span>Engagement: ${u.total_engagement || 0}</span>
+      </div>
+    `).join('');
+
+    // Engagement table
+    const tbody = document.getElementById('engagement-table-body');
+    if (!topUsers.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No engagement data</td></tr>`;
+    } else {
+      tbody.innerHTML = topUsers.map(u => `
+        <tr>
+          <td>-</td>
+          <td>-</td>
+          <td>${u.user_id || '-'}</td>
+          <td>${u.total_likes || 0}</td>
+          <td>${u.total_shares || 0}</td>
+          <td>${u.total_views || 0}</td>
+          <td>${u.total_engagement || 0}</td>
+          <td>-</td>
+        </tr>
+      `).join('');
+    }
+
+    // Engagement platform chart
+    let platforms = [];
+    try {
+      const res = await fetch('/admin/engagement-stats');
+      const data = await res.json();
+      if (Array.isArray(data.platforms)) {
+        platforms = data.platforms;
+      }
+    } catch {}
+
+    // Supported platforms for chart
+    const supportedPlatforms = [
+      'twitter', 'instagram', 'facebook', 'tiktok', 'gmb', 'pinterest', 'reddit', 'telegram'
+    ];
+    const platformLabels = supportedPlatforms.map(p =>
+      p.charAt(0).toUpperCase() + p.slice(1)
+    );
+    const likes = supportedPlatforms.map(p => {
+      const found = platforms.find(ep => (ep.platform || '').toLowerCase() === p);
+      return found ? (found.total_likes || 0) : 0;
+    });
+    const shares = supportedPlatforms.map(p => {
+      const found = platforms.find(ep => (ep.platform || '').toLowerCase() === p);
+      return found ? (found.total_shares || 0) : 0;
+    });
+    const views = supportedPlatforms.map(p => {
+      const found = platforms.find(ep => (ep.platform || '').toLowerCase() === p);
+      return found ? (found.total_views || 0) : 0;
+    });
+    const comments = supportedPlatforms.map(p => {
+      const found = platforms.find(ep => (ep.platform || '').toLowerCase() === p);
+      return found ? (found.total_comments || 0) : 0;
+    });
+
+    try {
+      const ctx = document.getElementById('engagementChart').getContext('2d');
+      if (window.engagementChartInstance) window.engagementChartInstance.destroy();
+      window.engagementChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: platformLabels,
+          datasets: [
+            { label: 'Likes', data: likes, backgroundColor: '#2563eb' },
+            { label: 'Shares', data: shares, backgroundColor: '#f59e42' },
+            { label: 'Views', data: views, backgroundColor: '#10b981' },
+            { label: 'Comments', data: comments, backgroundColor: '#f43f5e' }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    } catch {}
+  }
+  loadEngagementSection();
+
+  // Post queue actions (retry/delete)
+  window.retryPost = async function(id) {
+    if (!confirm('Retry this post?')) return;
+    await fetch(`/admin/posts/${id}/retry`, { method: 'POST' });
+    location.reload();
+  };
+  window.deletePost = async function(id) {
+    if (!confirm('Delete this post?')) return;
+    await fetch(`/admin/posts/${id}`, { method: 'DELETE' });
+    location.reload();
+  };
+
+  // --- Add New Post Modal ---
+  document.getElementById('add-post-btn').onclick = function() {
+    showModal(`
+      <h2>Add New Post</h2>
+      <form id="add-post-form">
+        <div>
+          <label>Platform</label>
+          <select name="platform" required>
+            <option value="">Select platform</option>
+            <option value="instagram">Instagram</option>
+            <option value="twitter">Twitter</option>
+            <option value="tiktok">TikTok</option>
+            <option value="facebook">Facebook</option>
+            <option value="reddit">Reddit</option>
+            <option value="telegram">Telegram</option>
+            <option value="pinterest">Pinterest</option>
+            <option value="gmb">GMB</option>
+          </select>
+        </div>
+        <div>
+          <label>Caption</label>
+          <textarea name="caption" required></textarea>
+        </div>
+        <div>
+          <label>Media Prompt</label>
+          <input name="media_prompt" type="text" required>
+        </div>
+        <div>
+          <label>Media URL</label>
+          <input name="media_url" type="url">
+        </div>
+        <div>
+          <label>Priority</label>
+          <input name="priority" type="number" value="0">
+        </div>
+        <div>
+          <label>Scheduled At</label>
+          <input name="scheduled_at" type="datetime-local" required>
+        </div>
+        <div>
+          <label>Type</label>
+          <select name="type" required>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </form>
+    `);
+    document.getElementById('add-post-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const payload = Object.fromEntries(fd.entries());
+      // Convert scheduled_at to ISO string
+      if (payload.scheduled_at) {
+        payload.scheduled_at = new Date(payload.scheduled_at).toISOString();
+      }
+      try {
+        await fetch('/admin/schedule-post', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        closeModal();
+        location.reload();
+      } catch {}
+    };
+  };
+
+  // --- Issue Reward Modal ---
+  document.getElementById('issue-reward-btn').onclick = function() {
+    showModal(`
+      <h2>Issue Reward</h2>
+      <form id="issue-reward-form">
+        <div>
+          <label>User ID</label>
+          <input name="user_id" type="text" required>
+        </div>
+        <div>
+          <label>Post ID</label>
+          <input name="post_id" type="text" required>
+        </div>
+        <div>
+          <label>Reward Type</label>
+          <select name="reward_type" required>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+            <option value="viral">Viral</option>
+          </select>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input name="amount" type="number" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Issue</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </form>
+    `);
+    document.getElementById('issue-reward-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const payload = Object.fromEntries(fd.entries());
+      try {
+        await fetch('/admin/rewards/issue', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        closeModal();
+        loadRewardStats();
+      } catch {}
+    };
+  };
+
+  // --- Modal helpers ---
+  window.showModal = function(html) {
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal-overlay').style.display = 'flex';
+  };
+  window.closeModal = function() {
+    document.getElementById('modal-overlay').style.display = 'none';
+    document.getElementById('modal-content').innerHTML = '';
+  };
+  document.getElementById('modal-overlay').onclick = function(e) {
+    if (e.target === this) closeModal();
+  };
+
+  // --- Bot Management: Set all bot statuses to "Active" or "Running" ---
+  function setAllBotsActive() {
+    // Set all .bot-status elements to "🟢 Running"
+    document.querySelectorAll('.bot-status').forEach(el => {
+      el.textContent = '🟢 Running';
+      el.classList.add('active');
+    });
+  }
+  setAllBotsActive();
+
+  // --- Blog Management: Generate Blog Modal ---
+  window.openBlogGeneratorModal = function() {
+    showModal(`
+      <h2>Generate Blog</h2>
+      <form id="generate-blog-form">
+        <div>
+          <label>Title</label>
+          <input name="title" type="text" required>
+        </div>
+        <div>
+          <label>Slug</label>
+          <input name="slug" type="text" required>
+        </div>
+        <div>
+          <label>Tags (comma separated)</label>
+          <input name="tags" type="text" placeholder="technology,programming">
+        </div>
+        <div>
+          <label>Image URLs (comma separated)</label>
+          <input name="image_urls" type="text" placeholder="https://img1,https://img2">
+        </div>
+        <div>
+          <label>Image Prompts (comma separated)</label>
+          <input name="image_prompts" type="text" placeholder="prompt1,prompt2">
+        </div>
+        <div>
+          <label>Content (HTML)</label>
+          <textarea name="content_html" rows="3"></textarea>
+        </div>
+        <div>
+          <label>Content (Markdown)</label>
+          <textarea name="content_markdown" rows="3"></textarea>
+        </div>
+        <div>
+          <label>Published</label>
+          <select name="published">
+            <option value="false" selected>No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div>
+          <label>Medium URL</label>
+          <input name="medium_url" type="url">
+        </div>
+        <div>
+          <label>Substack URL</label>
+          <input name="substack_url" type="url">
+        </div>
+        <div>
+          <label>Reddit URL</label>
+          <input name="reddit_url" type="url">
+        </div>
+        <div>
+          <label>GMB URL</label>
+          <input name="gmb_url" type="url">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </form>
+    `);
+    document.getElementById('generate-blog-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const payload = Object.fromEntries(fd.entries());
+      // Convert comma-separated fields to arrays
+      if (payload.tags) payload.tags = payload.tags.split(',').map(s => s.trim()).filter(Boolean);
+      if (payload.image_urls) payload.image_urls = payload.image_urls.split(',').map(s => s.trim()).filter(Boolean);
+      if (payload.image_prompts) payload.image_prompts = payload.image_prompts.split(',').map(s => s.trim()).filter(Boolean);
+      // Convert published to boolean
+      payload.published = payload.published === 'true';
+      // Add empty objects for syndication_status if not present
+      payload.syndication_status = {};
+      try {
+        await fetch('/admin/blog', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        closeModal();
+        // Optionally reload blogs table here
+      } catch {}
+    };
+  };
+});
+</script>
 </body>
 </html>

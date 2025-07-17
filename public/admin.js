@@ -763,21 +763,39 @@ async function createNotification() {
 // Rewards View
 async function loadRewardsView() {
   try {
-    const rewardStats = await fetchAPI("/admin/reward-stats")
-    updateRewardStats(rewardStats)
-    // For now, we'll show a placeholder since we don't have a specific rewards endpoint
-    renderRewardsTable([])
+    const { rewards } = await fetchAPI("/admin/rewards/all")  // ✅ Get full rewards list
+
+    if (!Array.isArray(rewards)) throw new Error("Invalid rewards data")
+
+    // 🎯 Count reward types
+    const counts = {
+      silver: 0,
+      gold: 0,
+      viral: 0,
+    }
+
+    rewards.forEach((r) => {
+      const type = (r.reward_type || "").toLowerCase()
+      if (counts[type] !== undefined) {
+        counts[type] += 1
+      }
+    })
+
+    updateRewardStats(counts)
+    renderRewardsTable(rewards)
     attachRewardsEventListeners()
+
   } catch (error) {
-    console.error("Failed to load rewards:", error)
+    console.error("[REWARDS] Load failed:", error)
     showToast("Failed to load rewards", "error")
   }
 }
 
-function updateRewardStats(stats) {
-  document.getElementById("silver-rewards").textContent = stats.silver || 0
-  document.getElementById("gold-rewards").textContent = stats.gold || 0
-  document.getElementById("viral-rewards").textContent = stats.viral || 0
+
+function updateRewardStats(counts) {
+  document.getElementById("silver-rewards").textContent = counts.silver || 0
+  document.getElementById("gold-rewards").textContent = counts.gold || 0
+  document.getElementById("viral-rewards").textContent = counts.viral || 0
 }
 
 function renderRewardsTable(rewards) {
@@ -788,6 +806,25 @@ function renderRewardsTable(rewards) {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center">No rewards found</td></tr>'
     return
   }
+
+  rewards.forEach((reward) => {
+    const row = document.createElement("tr")
+    row.innerHTML = `
+      <td>${reward.user_email || reward.user_id}</td>
+      <td><span class="status-badge ${reward.reward_type}">${capitalize(reward.reward_type)}</span></td>
+      <td>$${reward.amount}</td>
+      <td>${reward.metadata?.source || 'N/A'}</td>
+      <td><span class="status-badge ${reward.notified ? 'notified' : 'pending'}">${reward.notified ? 'Notified' : 'Pending'}</span></td>
+      <td>${formatTime(reward.issued_at)}</td>
+      <td class="actions">
+        ${!reward.notified ? `<button class="btn btn-sm btn-success approve-reward" data-id="${reward.id}"><i class="fas fa-check"></i></button>` : ""}
+        <button class="btn btn-sm btn-info view-reward" data-id="${reward.id}"><i class="fas fa-eye"></i></button>
+      </td>
+    `
+    tbody.appendChild(row)
+  })
+}
+
 
   rewards.forEach((reward) => {
     const row = document.createElement("tr")
@@ -805,6 +842,14 @@ function renderRewardsTable(rewards) {
     `
     tbody.appendChild(row)
   })
+
+function capitalize(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
+}
+
+function formatTime(dateStr) {
+  const date = new Date(dateStr)
+  return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 function attachRewardsEventListeners() {
@@ -1134,7 +1179,7 @@ async function loadBotsView() {
   try {
     const botsData = await fetchAPI("/admin/bots/status")
     updateBotCards(botsData)
-    updateCronTable(botsData.cronJobs || {})
+    updateCronTable(botsData) // << this must be here
     attachBotsEventListeners()
   } catch (error) {
     console.error("Failed to load bots:", error)
@@ -1142,60 +1187,49 @@ async function loadBotsView() {
   }
 }
 
-function updateBotCards(botsData) {
-  const bots = ["instagram", "twitter", "tiktok", "facebook", "reddit", "telegram", "pinterest", "gmb"]
 
-  bots.forEach((bot) => {
+function updateBotCards(botsData) {
+  Object.keys(botsData).forEach((bot) => {
+    const botInfo = botsData[bot]
     const statusElement = document.getElementById(`${bot}-status`)
     const lastRunElement = document.getElementById(`${bot}-last-run`)
     const successRateElement = document.getElementById(`${bot}-success-rate`)
 
-    if (statusElement && botsData[bot]) {
-      const botStatus = botsData[bot].status || "idle"
-      statusElement.textContent = `${getStatusEmoji(botStatus)} ${botStatus.charAt(0).toUpperCase() + botStatus.slice(1)}`
+    if (statusElement) {
+      const botStatus = botInfo.status || "idle"
+      statusElement.textContent = `${getStatusEmoji(botStatus)} ${capitalize(botStatus)}`
+    }
 
-      if (lastRunElement) {
-        lastRunElement.textContent = formatTime(botsData[bot].lastRun) || "Never"
-      }
+    if (lastRunElement) {
+      lastRunElement.textContent = botInfo.lastRun ? formatTime(botInfo.lastRun) : "Never"
+    }
 
-      if (successRateElement) {
-        successRateElement.textContent = `${botsData[bot].successRate || 0}%`
-      }
+    if (successRateElement) {
+      // Optional: you could calculate success rate using error logs if available
+      successRateElement.textContent = botInfo.lastError ? "⚠️ 0%" : "✅ 100%"
     }
   })
 }
 
-function updateCronTable(cronJobs) {
-  const tbody = document.getElementById("cron-table-body")
-  if (!tbody) return
 
+function updateCronTable(botsData) {
+  const tbody = document.getElementById("cron-table-body")
   tbody.innerHTML = ""
 
-  const bots = [
-    { name: "Instagram Bot", schedule: "*/15 * * * *", bot: "instagram" },
-    { name: "Twitter Bot", schedule: "5,35 * * * *", bot: "twitter" },
-    { name: "TikTok Bot", schedule: "10,40 * * * *", bot: "tiktok" },
-    { name: "Facebook Bot", schedule: "25,55 * * * *", bot: "facebook" },
-    { name: "Reddit Bot", schedule: "30 * * * *", bot: "reddit" },
-    { name: "Telegram Bot", schedule: "20 * * * *", bot: "telegram" },
-    { name: "Pinterest Bot", schedule: "50 * * * *", bot: "pinterest" },
-    { name: "GMB Bot", schedule: "45 * * * *", bot: "gmb" },
-  ]
+  Object.entries(botsData).forEach(([bot, data]) => {
+    const schedule = getBotCronSchedule(bot)
 
-  bots.forEach((bot) => {
     const row = document.createElement("tr")
-    const cronJob = cronJobs && cronJobs[bot.bot]
-
     row.innerHTML = `
-      <td>${bot.name}</td>
-      <td><code>${bot.schedule}</code></td>
-      <td id="${bot.bot}-next">-</td>
-      <td><span class="status-badge ${cronJob?.active ? "connected" : "disconnected"}">${cronJob?.active ? "Active" : "Inactive"}</span></td>
+      <td>${capitalize(bot)} Bot</td>
+      <td><code>${schedule}</code></td>
+      <td>${data.lastRun ? formatTime(data.lastRun) : "Not yet"}</td>
+      <td><span class="status-badge ${getStatusClass(data.status)}">${capitalize(data.status)}</span></td>
       <td class="actions">
-        <button class="btn btn-sm btn-warning pause-cron" data-bot="${bot.bot}">
+        <button class="btn btn-sm btn-warning pause-cron" data-bot="${bot}">
           <i class="fas fa-pause"></i>
         </button>
-        <button class="btn btn-sm btn-success resume-cron" data-bot="${bot.bot}">
+        <button class="btn btn-sm btn-success resume-cron" data-bot="${bot}">
           <i class="fas fa-play"></i>
         </button>
       </td>
@@ -1203,6 +1237,62 @@ function updateCronTable(cronJobs) {
     tbody.appendChild(row)
   })
 }
+function getStatusClass(status) {
+  switch ((status || "").toLowerCase()) {
+    case "running":
+      return "connected"
+    case "completed":
+      return "success"
+    case "paused":
+      return "warning"
+    case "idle":
+    default:
+      return "disconnected"
+  }
+}
+
+function getBotCronSchedule(bot) {
+  const schedules = {
+    instagram: "*/15 * * * *",
+    twitter: "5,35 * * * *",
+    tiktok: "10,40 * * * *",
+    facebook: "25,55 * * * *",
+    reddit: "30 * * * *",
+    telegram: "20 * * * *",
+    pinterest: "50 * * * *",
+    gmb: "45 * * * *",
+  }
+  return schedules[bot] || "*/30 * * * *" // fallback
+}
+
+function getStatusEmoji(status) {
+  switch ((status || "").toLowerCase()) {
+    case "running":
+      return "🟢"
+    case "completed":
+      return "✅"
+    case "paused":
+      return "⏸️"
+    case "idle":
+      return "⚪"
+    default:
+      return "❔"
+  }
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+function formatTime(isoStr) {
+  const date = new Date(isoStr)
+  return date.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
+}
+
+ 
 
 function attachBotsEventListeners() {
   // Run bot buttons
@@ -1242,15 +1332,15 @@ function attachBotsEventListeners() {
   })
 }
 
-function getStatusEmoji(status) {
-  const emojis = {
-    idle: "🟢",
-    running: "🟡",
-    error: "🔴",
-    paused: "⏸️",
-  }
-  return emojis[status] || "🟢"
-}
+// function getStatusEmoji(status) {
+//   const emojis = {
+//     idle: "🟢",
+//     running: "🟡",
+//     error: "🔴",
+//     paused: "⏸️",
+//   }
+//   return emojis[status] || "🟢"
+// }
 
 async function runBot(botName) {
   try {
