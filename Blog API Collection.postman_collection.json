@@ -1,0 +1,162 @@
+{
+	"info": {
+		"_postman_id": "46e273c5-a4c6-44dd-b5bc-89104327cd64",
+		"name": "Blog API Collection",
+		"description": "Collection for Blog API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38909410",
+		"_collection_link": "https://www.postman.com/streamhub/workspace/escrow/collection/38909410-46e273c5-a4c6-44dd-b5bc-89104327cd64?action=share&source=collection_link&creator=38909410"
+	},
+	"item": [
+		{
+			"name": "Create Blog",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"My First Blog Post\",\n  \"slug\": \"my-first-blog-post\",\n  \"tags\": [\"technology\", \"programming\"],\n  \"content_markdown\": \"# Welcome to My Blog\\nThis is a sample post in markdown.\",\n  \"content_html\": \"<h1>Welcome to My Blog</h1><p>This is a sample post in html.</p>\",\n  \"image_prompts\": [\"A futuristic cityscape at sunset\", \"A serene mountain lake\"],\n  \"image_urls\": [\n    \"https://images.unsplash.com/photo-1506744038136-46273834b3fb\",\n    \"https://images.unsplash.com/photo-1507525428034-b723cf961d3e\"\n  ]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/admin/blog",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"blog"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Blogs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/blog",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"blog"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Blog By ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/blog/056b90f7-b66d-490d-a7ff-42f9bba525b8",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"blog",
+						"056b90f7-b66d-490d-a7ff-42f9bba525b8"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Blog",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Theee End\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/admin/blog/056b90f7-b66d-490d-a7ff-42f9bba525b8",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"blog",
+						"056b90f7-b66d-490d-a7ff-42f9bba525b8"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Blog",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/blog/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"blog",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Publish Now",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/admin/blog/publish-now",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"blog",
+						"publish-now"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

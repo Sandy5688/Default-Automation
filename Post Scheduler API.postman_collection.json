@@ -1,0 +1,186 @@
+{
+	"info": {
+		"_postman_id": "ec0e0bd9-f477-45cb-9a5c-3347f94f6810",
+		"name": "Post Scheduler API",
+		"description": "API endpoints for scheduling and managing social media posts",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38909410",
+		"_collection_link": "https://www.postman.com/streamhub/workspace/escrow/collection/38909410-ec0e0bd9-f477-45cb-9a5c-3347f94f6810?action=share&source=collection_link&creator=38909410"
+	},
+	"item": [
+		{
+			"name": "Schedule Post",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"platform\": \"facebook\",\n  \"media_prompt\": \"I love the code\",\n  \"scheduled_at\": \"2025-07-15T16:40:00Z\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/schedule-post",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"schedule-post"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Preview Caption",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"platform\": \"instagram\",\n  \"prompt\": \"A cute puppy playing with a ball\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/preview-caption",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"preview-caption"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Retry Failed Posts",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/retry-failed",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"retry-failed"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Retry Posts by Platform",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"platform\": \"twitter\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/retry-platform",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"retry-platform"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Post Queue",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/admin/queue",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"queue"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Generated Posts",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/admin/generated",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"generated"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Post",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/admin/{id}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"{id}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}

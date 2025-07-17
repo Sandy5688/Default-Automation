@@ -3,6 +3,9 @@ const router = express.Router()
 const admin = require("../controllers/adminController")
 const postController = require('../controllers/postController');
 const blogController = require('../controllers/blogController');
+const engagementController = require('../controllers/engagementController');
+const analyticsController = require('../controllers/analyticsController');
+const notificationsController = require('../controllers/notificationsController');
 
 
 // Dashboard routes
@@ -61,6 +64,35 @@ router.delete('/blog/:id', blogController.deleteBlog);
 
 // Manual publish trigger
 router.post('/blog/publish-now', blogController.publishNow);
+
+
+// Engagement routes
+router.post('/engagement', engagementController.engagementCallback);
+
+// Analytics routes
+router.get('/engagement-stats', analyticsController.getEngagementStats);
+router.get('/reward-stats', analyticsController.getRewardStats);
+router.get('/top-users', analyticsController.getTopUsers);
+router.get('/rewards/all', analyticsController.getAllRewards);
+// Notifications routes
+// Admin route to fetch all notifications
+router.get('/notifications/all', notificationsController.getAllNotifications);
+
+// Fetch all for user
+router.get('/notifications/:user_id', notificationsController.getUserNotifications);
+
+// Create
+router.post('/notifications', notificationsController.createNotification);
+
+// Mark as read
+router.patch('/notifications/:id/read', notificationsController.markAsRead);
+
+// Mark all as read
+router.patch('/notifications/:user_id/mark-all-read', notificationsController.markAllAsRead);
+// Delete
+router.delete('/notifications/:id', notificationsController.deleteNotification);
+
+
 
 
 module.exports = router

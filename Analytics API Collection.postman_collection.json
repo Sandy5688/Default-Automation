@@ -1,0 +1,72 @@
+{
+	"info": {
+		"_postman_id": "26147bb5-7c98-45c9-9284-b001d3a02beb",
+		"name": "Analytics API Collection",
+		"description": "Collection for fetching engagement stats, reward stats, and top users",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38909410",
+		"_collection_link": "https://www.postman.com/streamhub/workspace/escrow/collection/38909410-26147bb5-7c98-45c9-9284-b001d3a02beb?action=share&source=collection_link&creator=38909410"
+	},
+	"item": [
+		{
+			"name": "Get Engagement Stats",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/engagement-stats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"engagement-stats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Reward Stats",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/reward-stats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"reward-stats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Top Users",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/top-users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"top-users"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

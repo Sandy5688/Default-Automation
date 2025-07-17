@@ -1,16 +1,55 @@
 const { supabase } = require('../services/supabaseClient');
 const logger = require('../utils/logger');
 const { publishPendingBlogs } = require('../blog/blogScheduler');
+const {generateImageFromPrompt} = require('../services/replicateService');
+const { generateBlogContent, markdownToHtml } = require('../services/aiService');
+
 
 // Create new blog
 exports.createBlog = async (req, res) => {
-  const { title, slug, tags, content_markdown, content_html, image_prompts, image_urls } = req.body;
+  let {
+    title,
+    slug,
+    tags,
+    content_markdown,
+    content_html,
+    image_prompts,
+    image_urls,
+    force_generate
+  } = req.body;
 
-  if (!title || !slug || !content_markdown) {
-    return res.status(400).json({ error: 'Missing required fields: title, slug, content_markdown' });
+  if (!title || !slug) {
+    return res.status(400).json({ error: 'Missing required fields: title, slug' });
   }
 
   try {
+    // 🔹 (1) Generate blog content if missing OR force_generate is true
+    if (!content_markdown || force_generate) {
+      const blogPrompt = `Write a detailed, SEO-optimized blog post titled: "${title}"`;
+      content_markdown = await generateBlogContent(blogPrompt);
+    }
+
+    // 🔹 (2) Generate HTML if missing OR force_generate is true
+    if (!content_html || force_generate) {
+      content_html = await markdownToHtml(content_markdown);
+    }
+
+    // 🔹 (3) Generate images if image_prompts is provided & image_urls missing or empty
+    if (image_prompts && (!image_urls || image_urls.length === 0)) {
+      if (Array.isArray(image_prompts)) {
+        const generatedImages = [];
+        for (const prompt of image_prompts) {
+          const image = await generateImageFromPrompt(prompt);
+          if (image) generatedImages.push(image);
+        }
+        image_urls = generatedImages;
+      } else if (typeof image_prompts === 'string') {
+        const image = await generateImageFromPrompt(image_prompts);
+        image_urls = image ? [image] : [];
+      }
+    }
+
+    // 🔹 (4) Save blog to Supabase
     const { error } = await supabase.from('blogs').insert({
       title,
       slug,
@@ -22,12 +61,23 @@ exports.createBlog = async (req, res) => {
     });
 
     if (error) throw error;
-    res.status(201).json({ message: 'Blog created successfully' });
+
+    res.status(201).json({
+      message: 'Blog created successfully',
+      image_urls,
+      markdown_length: content_markdown?.length,
+      html_length: content_html?.length,
+    });
+
   } catch (err) {
     logger.error(`[CREATE_BLOG] ${err.message}`);
-    res.status(500).json({ error: 'Failed to create blog', detail: err.message });
+    res.status(500).json({
+      error: 'Failed to create blog',
+      detail: err.message
+    });
   }
 };
+
 
 // Get all blogs
 exports.getAllBlogs = async (req, res) => {

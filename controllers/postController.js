@@ -1,50 +1,67 @@
 const { supabase } = require('../services/supabaseClient');
 const { generateCaption } = require('../services/aiService');
 const {
+  generateImageFromPrompt,
   generateVideoFromPrompt,
-  waitForVideoCompletion,
-} = require('../services/runwayService');
+} = require('../services/replicateService');
 const logger = require('../utils/logger');
 
-// 1. Schedule a post (AI caption + optional video + queue it)
+const axios = require('axios');
+
+// Helper: Decide media type based on platform
+const inferMediaType = (platform) => {
+  const videoPlatforms = ['tiktok', 'youtubeshorts'];
+  return videoPlatforms.includes(platform.toLowerCase()) ? 'video' : 'image';
+};
+
+// 1. Schedule a post (AI caption + optional media + queue it)
 exports.schedulePost = async (req, res) => {
-  const { platform, media_prompt, media_url, scheduled_at } = req.body;
+  const { platform, media_prompt, media_url, scheduled_at, type } = req.body;
 
   if (!platform || !media_prompt) {
     return res.status(400).json({ error: 'Missing platform or media_prompt' });
   }
 
   try {
-    // Generate caption
+    // 1. Generate AI Caption
     const caption = await generateCaption(media_prompt, platform);
     logger.info(`[SCHEDULE_POST] Caption generated for ${platform}`);
 
-    // Generate video if media_url not provided
-   let finalMediaUrl = media_url;
+    // 2. Decide if we need to generate media
+    let finalMediaUrl = media_url;
+    const shouldGenerate = !finalMediaUrl || finalMediaUrl.trim() === '';
+    const requestedType = type || inferMediaType(platform); // fallback by platform
+    if (shouldGenerate) {
+      logger.info(`[SCHEDULE_POST] No media_url provided, generating media of type: ${requestedType}`);
+      try {
+        if (requestedType === 'video' && process.env.ENABLE_VIDEO_GEN === 'true') {
+          finalMediaUrl = await generateVideoFromPrompt(media_prompt);
+          logger.info(`[SCHEDULE_POST] Video generated: ${finalMediaUrl}`);
+        } else {
+          finalMediaUrl = await generateImageFromPrompt(media_prompt);
+          logger.info(`[SCHEDULE_POST] Image generated: ${finalMediaUrl}`);
+        }
 
-logger.info(`[SCHEDULE_POST] DEBUG: finalMediaUrl = "${finalMediaUrl}", ENABLE_VIDEO_GEN = ${process.env.ENABLE_VIDEO_GEN}`);
+        if (!finalMediaUrl) {
+          throw new Error(`No ${requestedType} URL was returned from generation`);
+        }
+      } catch (genErr) {
+        logger.error(`[SCHEDULE_POST] Media generation failed: ${genErr.message}`);
+        return res.status(500).json({ error: 'Media generation failed', detail: genErr.message });
+      }
+    }
 
-if ((!finalMediaUrl || finalMediaUrl === '') && process.env.ENABLE_VIDEO_GEN === 'true') {
-  try {
-    logger.info(`[SCHEDULE_POST] Starting RunwayML video generation...`);
-    const jobId = await generateVideoFromPrompt(media_prompt);
-    logger.info(`[SCHEDULE_POST] RunwayML job started: ${jobId}`);
-    finalMediaUrl = await waitForVideoCompletion(jobId, 90);
-    logger.info(`[SCHEDULE_POST] RunwayML video ready: ${finalMediaUrl}`);
-  } catch (videoErr) {
-    logger.error(`[SCHEDULE_POST] RunwayML video generation failed: ${videoErr.message}`);
-  }
-}
 
-    // Save to generated_posts
+    // 3. Save to generated_posts
     await supabase.from('generated_posts').insert({
       platform,
       caption,
       media_prompt,
+      media_url: finalMediaUrl,
       queued: true,
     });
 
-    // Save to post_queue
+    // 4. Save to post_queue
     const { error } = await supabase.from('post_queue').insert({
       platform,
       media_url: finalMediaUrl,
@@ -54,6 +71,7 @@ if ((!finalMediaUrl || finalMediaUrl === '') && process.env.ENABLE_VIDEO_GEN ===
     });
 
     if (error) throw error;
+
     res.json({ message: 'Post scheduled successfully' });
   } catch (err) {
     logger.error(`[SCHEDULE_POST] ${err.stack}`);

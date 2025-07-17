@@ -57,24 +57,133 @@ create table if not exists logs (
   created_at timestamp with time zone default now()
 );
 
--- 🧩 6. TRIGGERS: For reward automation (stub function you can later define)
+-- 1. Notifications Table
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  type text check (type in ('reward', 'engagement', 'system', 'custom')) not null,
+  title text not null,
+  message text not null,
+  data jsonb,
+  read boolean default false,
+  delivered boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+-- 2. Rewards Table
+create table if not exists rewards (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete set null,
+  post_id uuid references post_queue(id) on delete cascade,
+  reward_type text check (reward_type in ('silver', 'gold', 'viral')),
+  amount numeric default 0,
+  issued_at timestamp with time zone default now(),
+  metadata jsonb,
+  notified boolean default false
+);
+
+-- 3. Trigger Function
 create or replace function handle_engagement_insert()
 returns trigger as $$
+declare
+  total_engagements int;
 begin
-  -- Example: If likes > 100 and reward not yet triggered
-  if new.likes > 100 and new.reward_triggered = false then
-    update engagements set reward_triggered = true where id = new.id;
-    -- You can extend this to insert reward rows or notify the user
+  total_engagements := new.likes + new.shares + new.comments + new.views;
+
+  if total_engagements >= 100 and new.reward_triggered = false then
+
+    update engagements
+    set reward_triggered = true
+    where id = new.id;
+
+    insert into rewards (user_id, post_id, reward_type, amount)
+    values (new.user_id, new.post_id, 'silver', 10);
+
   end if;
+
   return new;
 end;
 $$ language plpgsql;
 
+-- 4. Attach Trigger
 drop trigger if exists engagement_reward_trigger on engagements;
+
 create trigger engagement_reward_trigger
-  after insert on engagements
+  after insert or update on engagements
   for each row
   execute procedure handle_engagement_insert();
+
+create or replace function award_tokens_if_needed(
+  input_post_id uuid,
+  input_user_id uuid
+)
+returns jsonb
+language plpgsql
+as $$
+declare
+  existing_reward rewards%rowtype;
+  new_reward_id uuid;
+begin
+  -- Check if already rewarded
+  select * into existing_reward
+  from rewards
+  where post_id = input_post_id
+    and user_id = input_user_id;
+
+  if found then
+    return jsonb_build_object(
+      'status', 'already rewarded',
+      'reward_id', existing_reward.id
+    );
+  end if;
+
+  -- Insert reward
+  insert into rewards (
+    user_id,
+    post_id,
+    reward_type,
+    amount,
+    metadata
+  )
+  values (
+    input_user_id,
+    input_post_id,
+    'silver',
+    10,
+    jsonb_build_object('source', 'rpc_engagement')
+  )
+  returning id into new_reward_id;
+
+  -- Send notification
+  insert into notifications (
+    user_id,
+    type,
+    title,
+    message,
+    data
+  )
+  values (
+    input_user_id,
+    'reward',
+    '🎉 You earned a reward!',
+    'You passed the engagement threshold and received a silver reward.',
+    jsonb_build_object(
+      'post_id', input_post_id,
+      'reward_id', new_reward_id,
+      'amount', 10,
+      'tier', 'silver'
+    )
+  );
+
+  return jsonb_build_object(
+    'status', 'reward issued',
+    'reward_id', new_reward_id,
+    'tier', 'silver',
+    'amount', 10
+  );
+end;
+$$;
+
 
 -- ✅ 7. RLS POLICIES
 -- USERS
@@ -221,3 +330,70 @@ alter table blogs
   add column gmb_url text,
   add column syndication_status jsonb default '{}'::jsonb;
   
+create or replace function get_platform_engagement_stats()
+returns table (
+  platform text,
+  total_likes int,
+  total_shares int,
+  total_views int,
+  total_comments int
+) as $$
+begin
+  return query
+  select
+    e.platform::text,
+    sum(e.likes)::int,
+    sum(e.shares)::int,
+    sum(e.views)::int,
+    sum(e.comments)::int
+  from engagements e
+  group by e.platform;
+end;
+$$ language plpgsql;
+
+
+
+
+create or replace function get_reward_stats_by_type()
+returns table (
+  reward_type text,
+  total_rewards int,
+  total_amount numeric
+) as $$
+begin
+  return query
+  select
+    r.reward_type,
+    count(*)::int as total_rewards,
+    sum(r.amount)::numeric as total_amount
+  from rewards r
+  group by r.reward_type;
+end;
+$$ language plpgsql;
+
+
+create or replace function top_engaged_users()
+returns table (
+  user_id uuid,
+  total_likes int,
+  total_shares int,
+  total_comments int,
+  total_views int,
+  total_engagement int
+) as $$
+begin
+  return query
+  select
+    e.user_id,
+    sum(e.likes)::int,
+    sum(e.shares)::int,
+    sum(e.comments)::int,
+    sum(e.views)::int,
+    (sum(e.likes + e.shares + e.comments + e.views))::int as total_engagement
+  from engagements e
+  where e.user_id is not null
+  group by e.user_id
+  order by total_engagement desc
+  limit 10;
+end;
+$$ language plpgsql;

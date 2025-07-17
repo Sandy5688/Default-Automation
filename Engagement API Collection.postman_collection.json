@@ -1,0 +1,41 @@
+{
+	"info": {
+		"_postman_id": "3682e226-110a-4779-b6c6-ddce2739d272",
+		"name": "Engagement API Collection",
+		"description": "Collection for Engagement callback endpoint",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38909410",
+		"_collection_link": "https://www.postman.com/streamhub/workspace/escrow/collection/38909410-3682e226-110a-4779-b6c6-ddce2739d272?action=share&source=collection_link&creator=38909410"
+	},
+	"item": [
+		{
+			"name": "Post Engagement Callback",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"post_id\": \"fc8892d4-e88f-410e-b597-ed2c53d96f35\",\n  \"platform\": \"twitter\",\n  \"likes\": 150,\n  \"shares\": 20,\n  \"comments\": 10,\n  \"views\": 1200,\n  \"user_id\": \"84feda35-9d1b-4d58-9373-216f6647f015\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/admin/engagement",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"engagement"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

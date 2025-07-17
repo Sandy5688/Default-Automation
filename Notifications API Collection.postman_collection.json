@@ -1,0 +1,154 @@
+{
+	"info": {
+		"_postman_id": "f15c1767-6778-4b8d-9d80-0d4d9c0db934",
+		"name": "Notifications API Collection",
+		"description": "Collection for managing notifications",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38909410",
+		"_collection_link": "https://www.postman.com/streamhub/workspace/escrow/collection/38909410-f15c1767-6778-4b8d-9d80-0d4d9c0db934?action=share&source=collection_link&creator=38909410"
+	},
+	"item": [
+		{
+			"name": "Get User Notifications",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/notifications/84feda35-9d1b-4d58-9373-216f6647f015",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"notifications",
+						"84feda35-9d1b-4d58-9373-216f6647f015"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Notification",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"user_id\": \"84feda35-9d1b-4d58-9373-216f6647f015\",\n  \"type\": \"custom\",\n  \"title\": \"New Message\",\n  \"message\": \"You have a new message!\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/admin/notifications",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"notifications"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mark Notification as Read",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/notifications/c6603bb6-1820-4c33-b186-d3264d01c575/read",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"notifications",
+						"c6603bb6-1820-4c33-b186-d3264d01c575",
+						"read"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Notification",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/notifications/{id}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"notifications",
+						"{id}"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "notification123"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mark All Notifications as Read for User",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/notifications/user/{user_id}/mark-all-read",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"notifications",
+						"user",
+						"{user_id}",
+						"mark-all-read"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Notifications (Admin)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/admin/notifications/all",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"notifications",
+						"all"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
