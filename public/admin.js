@@ -250,12 +250,26 @@ function renderPostsTable(posts) {
     return
   }
 
-  posts.forEach((post) => {
+  posts.forEach((post, idx) => {
+    const caption = post.caption || post.content || ""
+    const isLong = caption.length > 50
+    const shortId = `caption-short-${idx}`
+    const fullId = `caption-full-${idx}`
+
     const row = document.createElement("tr")
     row.innerHTML = `
       <td>${post.id}</td>
       <td><i class="fab fa-${post.platform}"></i> ${post.platform}</td>
-      <td>${truncateText(post.caption || post.content, 50)}</td>
+      <td>
+        <span id="${shortId}" class="caption-short" style="display:inline;">
+          ${truncateText(caption, 50)}
+          ${isLong ? `<a href="#" class="read-more" data-idx="${idx}" style="color:blue; text-decoration:underline; margin-left:5px;">Read more</a>` : ""}
+        </span>
+        <span id="${fullId}" class="caption-full" style="display:none;">
+          ${caption}
+          ${isLong ? `<a href="#" class="read-less" data-idx="${idx}" style="color:blue; text-decoration:underline; margin-left:5px;">Show less</a>` : ""}
+        </span>
+      </td>
       <td>${post.media_url ? '<i class="fas fa-image"></i>' : '<i class="fas fa-file-text"></i>'}</td>
       <td><span class="status-badge ${post.status}">${post.status}</span></td>
       <td>${formatTime(post.scheduled_at || post.created_at)}</td>
@@ -267,6 +281,28 @@ function renderPostsTable(posts) {
     `
     tbody.appendChild(row)
   })
+
+  // Event delegation for caption toggling
+  tbody.addEventListener("click", function(e) {
+    if (e.target.classList.contains("read-more")) {
+      e.preventDefault()
+      const idx = e.target.getAttribute("data-idx")
+      document.getElementById(`caption-short-${idx}`).style.display = "none"
+      document.getElementById(`caption-full-${idx}`).style.display = "inline"
+    }
+    if (e.target.classList.contains("read-less")) {
+      e.preventDefault()
+      const idx = e.target.getAttribute("data-idx")
+      document.getElementById(`caption-full-${idx}`).style.display = "none"
+      document.getElementById(`caption-short-${idx}`).style.display = "inline"
+    }
+  })
+}
+
+// Helper to truncate text
+function truncateText(text, maxLength) {
+  if (!text) return ""
+  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
 }
 
 function attachPostsEventListeners() {
@@ -1860,4 +1896,66 @@ function startAutoRefresh() {
 // Stop auto-refresh
 function stopAutoRefresh() {
   clearInterval(refreshInterval)
+}
+
+// Style Add New Post modal to perfection
+window.showModal = function(html) {
+  document.getElementById('modal-content').innerHTML = html
+  document.getElementById('modal-overlay').style.display = 'flex'
+  // Modal styling
+  const modal = document.getElementById('modal-content')
+  modal.style.maxWidth = '480px'
+  modal.style.margin = 'auto'
+  modal.style.background = '#fff'
+  modal.style.borderRadius = '14px'
+  modal.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)'
+  modal.style.padding = '2em'
+  modal.style.fontSize = '1.05em'
+  // Style form fields
+  modal.querySelectorAll('input, select, textarea').forEach(el => {
+    el.style.marginBottom = '1em'
+    el.style.padding = '0.7em'
+    el.style.borderRadius = '7px'
+    el.style.border = '1px solid #e2e8f0'
+    el.style.fontSize = '1em'
+    el.style.width = '100%'
+    el.style.boxSizing = 'border-box'
+  })
+  // Style buttons
+  modal.querySelectorAll('button').forEach(btn => {
+    btn.style.borderRadius = '7px'
+    btn.style.border = 'none'
+    btn.style.padding = '0.7em 1.3em'
+    btn.style.fontSize = '1em'
+    btn.style.cursor = 'pointer'
+    btn.style.marginRight = '0.5em'
+    btn.style.background = btn.classList.contains('btn-primary') ? '#2563eb' : '#e2e8f0'
+    btn.style.color = btn.classList.contains('btn-primary') ? '#fff' : '#222'
+    btn.style.transition = 'background 0.2s'
+  })
+}
+
+// Make filter by platform and status functional
+document.getElementById("platform-filter").addEventListener("change", filterPosts)
+document.getElementById("status-filter").addEventListener("change", filterPosts)
+
+async function filterPosts() {
+  const platformFilter = document.getElementById("platform-filter").value
+  const statusFilter = document.getElementById("status-filter").value
+
+  // Fetch all posts and filter client-side (or server-side if API supports)
+  try {
+    const posts = await fetchAPI("/admin/posts/queue")
+    let filtered = posts
+    if (platformFilter !== "all") {
+      filtered = filtered.filter(p => (p.platform || "").toLowerCase() === platformFilter)
+    }
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(p => (p.status || "").toLowerCase() === statusFilter)
+    }
+    renderPostsTable(filtered)
+    attachPostsEventListeners()
+  } catch (error) {
+    showToast("Failed to filter posts", "error")
+  }
 }

@@ -882,11 +882,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Add New Post Modal ---
   document.getElementById('add-post-btn').onclick = function() {
     showModal(`
-      <h2>Add New Post</h2>
+      <div style="background-color: #fff; padding: 24px; border-radius: 12px; max-width: 600px; margin: auto; font-family: Arial, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.1); color: #333;">
+      <h2 style="margin-top: 0; font-size: 24px; margin-bottom: 20px;">Add New Post</h2>
       <form id="add-post-form">
-        <div>
-          <label>Platform</label>
-          <select name="platform" required>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Platform</label>
+          <select name="platform" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
             <option value="">Select platform</option>
             <option value="instagram">Instagram</option>
             <option value="twitter">Twitter</option>
@@ -898,36 +900,47 @@ document.addEventListener('DOMContentLoaded', () => {
             <option value="gmb">GMB</option>
           </select>
         </div>
-        <div>
-          <label>Caption</label>
-          <textarea name="caption" required></textarea>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Caption</label>
+          <textarea name="caption" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; min-height: 100px;"></textarea>
         </div>
-        <div>
-          <label>Media Prompt</label>
-          <input name="media_prompt" type="text" required>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Media Prompt</label>
+          <input type="text" name="media_prompt" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
         </div>
-        <div>
-          <label>Media URL</label>
-          <input name="media_url" type="url">
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Media URL</label>
+          <input type="url" name="media_url" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
         </div>
-        <div>
-          <label>Priority</label>
-          <input name="priority" type="number" value="0">
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Priority</label>
+          <input type="number" name="priority" value="0" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
         </div>
-        <div>
-          <label>Scheduled At</label>
-          <input name="scheduled_at" type="datetime-local" required>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Scheduled At</label>
+          <input type="datetime-local" name="scheduled_at" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
         </div>
-        <div>
-          <label>Type</label>
-          <select name="type" required>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: bold;">Type</label>
+          <select name="type" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
             <option value="image">Image</option>
             <option value="video">Video</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="submit" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;">Submit</button>
+          <button type="button" onclick="closeModal()" style="background-color: #ccc; color: black; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;">Cancel</button>
+        </div>
+
       </form>
+    </div>
     `);
     document.getElementById('add-post-form').onsubmit = async function(e) {
       e.preventDefault();
@@ -1020,62 +1033,79 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Blog Management: Generate Blog Modal ---
   window.openBlogGeneratorModal = function() {
     showModal(`
-      <h2>Generate Blog</h2>
-      <form id="generate-blog-form">
-        <div>
-          <label>Title</label>
-          <input name="title" type="text" required>
-        </div>
-        <div>
-          <label>Slug</label>
-          <input name="slug" type="text" required>
-        </div>
-        <div>
-          <label>Tags (comma separated)</label>
-          <input name="tags" type="text" placeholder="technology,programming">
-        </div>
-        <div>
-          <label>Image URLs (comma separated)</label>
-          <input name="image_urls" type="text" placeholder="https://img1,https://img2">
-        </div>
-        <div>
-          <label>Image Prompts (comma separated)</label>
-          <input name="image_prompts" type="text" placeholder="prompt1,prompt2">
-        </div>
-        <div>
-          <label>Content (HTML)</label>
-          <textarea name="content_html" rows="3"></textarea>
-        </div>
-        <div>
-          <label>Content (Markdown)</label>
-          <textarea name="content_markdown" rows="3"></textarea>
-        </div>
-        <div>
-          <label>Published</label>
-          <select name="published">
-            <option value="false" selected>No</option>
-            <option value="true">Yes</option>
-          </select>
-        </div>
-        <div>
-          <label>Medium URL</label>
-          <input name="medium_url" type="url">
-        </div>
-        <div>
-          <label>Substack URL</label>
-          <input name="substack_url" type="url">
-        </div>
-        <div>
-          <label>Reddit URL</label>
-          <input name="reddit_url" type="url">
-        </div>
-        <div>
-          <label>GMB URL</label>
-          <input name="gmb_url" type="url">
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      </form>
+     <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Generate Blog</h2>
+
+<form id="generate-blog-form" style="max-width: 600px; margin: 0 auto; padding: 1rem; border: 1px solid #ccc; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-family: sans-serif; background-color: #fdfdfd;">
+  
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Title</label>
+    <input name="title" type="text" required style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Slug</label>
+    <input name="slug" type="text" required style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Tags (comma separated)</label>
+    <input name="tags" type="text" placeholder="technology,programming" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Image URLs (comma separated)</label>
+    <input name="image_urls" type="text" placeholder="https://img1,https://img2" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Image Prompts (comma separated)</label>
+    <input name="image_prompts" type="text" placeholder="prompt1,prompt2" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Content (HTML)</label>
+    <textarea name="content_html" rows="3" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;"></textarea>
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Content (Markdown)</label>
+    <textarea name="content_markdown" rows="3" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;"></textarea>
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Published</label>
+    <select name="published" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+      <option value="false" selected>No</option>
+      <option value="true">Yes</option>
+    </select>
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Medium URL</label>
+    <input name="medium_url" type="url" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Substack URL</label>
+    <input name="substack_url" type="url" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">Reddit URL</label>
+    <input name="reddit_url" type="url" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="margin-bottom: 1.5rem;">
+    <label style="display: block; font-weight: bold; margin-bottom: 0.4rem;">GMB URL</label>
+    <input name="gmb_url" type="url" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc;">
+  </div>
+
+  <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+    <button type="submit" style="padding: 0.5rem 1rem; border: none; background-color: #007bff; color: white; border-radius: 6px; cursor: pointer;">Submit</button>
+    <button type="button" onclick="closeModal()" style="padding: 0.5rem 1rem; border: 1px solid #999; background-color: #f5f5f5; color: #333; border-radius: 6px; cursor: pointer;">Cancel</button>
+  </div>
+</form>
+
     `);
     document.getElementById('generate-blog-form').onsubmit = async function(e) {
       e.preventDefault();
