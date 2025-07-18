@@ -224,12 +224,7 @@ default-automation/
 
 ---
 
-## 📝 Notes
 
-- This project is in active development. Features and APIs may change.
-- For detailed documentation, API references, and contribution guidelines, visit our [Wiki](https://github.com/your-org/default-automation/wiki).
-- Join our [Discord server](https://discord.gg/your-invite-link) for support, feature requests, and community engagement.
-```
 ---
 
 ## 🧩 Extending Functionality
